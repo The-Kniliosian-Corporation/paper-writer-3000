@@ -15,8 +15,8 @@
   </div>
 </header>
 
-<main>
-  <section class="panel notes-panel">
+<main id="main-row">
+  <section class="panel notes-panel" id="panel-notes">
     <div class="panel-header">
       <h2>Rough Notes</h2>
       <div>
@@ -27,7 +27,9 @@
     <textarea id="notes-editor" spellcheck="false"></textarea>
   </section>
 
-  <section class="panel output-panel">
+  <div class="gutter" data-resize="col-0"></div>
+
+  <section class="panel output-panel" id="panel-output">
     <div class="panel-header">
       <h2>Generated Paper</h2>
       <div class="tabs">
@@ -43,7 +45,9 @@
     </div>
   </section>
 
-  <section class="panel chat-panel">
+  <div class="gutter" data-resize="col-1"></div>
+
+  <section class="panel chat-panel" id="panel-chat">
     <div class="panel-header">
       <h2>Consult</h2>
     </div>
@@ -55,7 +59,9 @@
   </section>
 </main>
 
-<footer class="panel history-panel">
+<div class="row-gutter" data-resize="row-0"></div>
+
+<footer class="panel history-panel" id="panel-history">
   <div class="panel-header">
     <h2>History</h2>
     <button id="history-refresh-btn">Refresh</button>

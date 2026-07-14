@@ -131,10 +131,71 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
   };
 });
 
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function inlineMarkdown(text) {
+  let out = escapeHtml(text);
+  out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>");
+  out = out.replace(/`([^`]+)`/g, "<code>$1</code>");
+  return out;
+}
+
+// Small, deliberately non-exhaustive markdown renderer: just enough for the
+// headers/bold/links/lists that model responses (e.g. citation lists) use.
+function renderMarkdown(text) {
+  const lines = text.split("\n");
+  let html = "";
+  let inList = false;
+  const closeList = () => {
+    if (inList) {
+      html += "</ul>";
+      inList = false;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    if (/^\s*-{3,}\s*$/.test(line)) {
+      closeList();
+      html += "<hr>";
+      continue;
+    }
+    const headerMatch = line.match(/^(#{1,4})\s+(.*)$/);
+    if (headerMatch) {
+      closeList();
+      const level = Math.min(headerMatch[1].length + 2, 6);
+      html += `<h${level}>${inlineMarkdown(headerMatch[2])}</h${level}>`;
+      continue;
+    }
+    const listMatch = line.match(/^\s*[-*]\s+(.*)$/);
+    if (listMatch) {
+      if (!inList) {
+        html += "<ul>";
+        inList = true;
+      }
+      html += `<li>${inlineMarkdown(listMatch[1])}</li>`;
+      continue;
+    }
+    closeList();
+    if (line.trim() === "") continue;
+    html += `<p>${inlineMarkdown(line)}</p>`;
+  }
+  closeList();
+  return html;
+}
+
 function appendChatMessage(role, text) {
   const div = document.createElement("div");
   div.className = `chat-msg ${role}`;
-  div.textContent = text;
+  if (role === "assistant") {
+    div.innerHTML = renderMarkdown(text);
+  } else {
+    div.textContent = text;
+  }
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
@@ -160,6 +221,73 @@ chatForm.onsubmit = async (e) => {
 };
 
 historyRefreshBtn.onclick = loadHistory;
+
+function makeColResizer(gutter, leftPanel, rightPanel) {
+  const minWidth = 150;
+  gutter.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startLeft = leftPanel.getBoundingClientRect().width;
+    const startRight = rightPanel.getBoundingClientRect().width;
+    gutter.classList.add("dragging");
+    document.body.style.cursor = "col-resize";
+
+    function onMove(ev) {
+      const dx = ev.clientX - startX;
+      const newLeft = startLeft + dx;
+      const newRight = startRight - dx;
+      if (newLeft < minWidth || newRight < minWidth) return;
+      leftPanel.style.flex = `0 0 ${newLeft}px`;
+      rightPanel.style.flex = `0 0 ${newRight}px`;
+    }
+    function onUp() {
+      gutter.classList.remove("dragging");
+      document.body.style.cursor = "";
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    }
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+}
+
+function makeRowResizer(gutter, panelBelow) {
+  const minHeight = 60;
+  gutter.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = panelBelow.getBoundingClientRect().height;
+    gutter.classList.add("dragging");
+    document.body.style.cursor = "row-resize";
+
+    function onMove(ev) {
+      const dy = ev.clientY - startY;
+      const newHeight = startHeight - dy;
+      if (newHeight < minHeight) return;
+      panelBelow.style.flex = `0 0 ${newHeight}px`;
+    }
+    function onUp() {
+      gutter.classList.remove("dragging");
+      document.body.style.cursor = "";
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    }
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+}
+
+makeColResizer(
+  document.querySelector('[data-resize="col-0"]'),
+  document.getElementById("panel-notes"),
+  document.getElementById("panel-output")
+);
+makeColResizer(
+  document.querySelector('[data-resize="col-1"]'),
+  document.getElementById("panel-output"),
+  document.getElementById("panel-chat")
+);
+makeRowResizer(document.querySelector('[data-resize="row-0"]'), document.getElementById("panel-history"));
 
 (async function init() {
   await Promise.all([loadNotes(), loadModels(), loadTex(), loadHistory()]);
