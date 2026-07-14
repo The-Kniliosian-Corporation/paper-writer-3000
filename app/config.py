@@ -21,6 +21,10 @@ SELECTABLE_MODELS = [
     for m in os.environ.get("OPENAI_MODELS", DEFAULT_MODEL).split(",")
     if m.strip()
 ]
+# Model used for the consultant chat, via the Responses API's web_search tool
+# (needs a model on your account that supports it). Separate from DEFAULT_MODEL
+# since generate.py needs structured JSON output, not web search.
+CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", DEFAULT_MODEL)
 
 # The tag of the commit holding the pristine, un-generated section skeletons
 # (see PLAN.md). Section instructions are read from this tag via `git show`

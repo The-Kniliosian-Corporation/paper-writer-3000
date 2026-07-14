@@ -14,7 +14,8 @@ See [PLAN.md](PLAN.md) for the full design rationale and decisions behind the ap
   compiles it to `manuscript/0_main.pdf` with Tectonic; commits the regenerated `.tex` files.
 - **History** — every save and generate is a real git commit. The history panel lists them; "revert notes
   here" restores `paper.md` to an earlier point as a new commit (nothing is destroyed).
-- **Consult** — a chat panel for talking through direction, gaps, and framing with the same model. It's
+- **Consult** — a chat panel for talking through direction, gaps, and framing. It has live web search (via
+  OpenAI's `web_search` tool), so it can look up related work and check claims instead of guessing. It's
   advisory only: it can see your notes and generated paper for context but never edits files itself.
 
 The model never invents citations, numbers, or claims that aren't in your notes — where something's
@@ -34,7 +35,8 @@ python -m venv .venv
 copy .env.example .env
 ```
 
-Then open `.env` and fill in `OPENAI_API_KEY` (and optionally `OPENAI_MODEL` / `OPENAI_MODELS`).
+Then open `.env` and fill in `OPENAI_API_KEY` (and optionally `OPENAI_MODEL` / `OPENAI_MODELS` /
+`OPENAI_CHAT_MODEL` — the chat model needs to be one your account can use with the `web_search` tool).
 
 ## Running
 

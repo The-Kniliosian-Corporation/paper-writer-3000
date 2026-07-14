@@ -1,10 +1,15 @@
 from openai import OpenAI
 
-from .config import DEFAULT_MODEL, MANUSCRIPT_DIR, OPENAI_API_KEY, PAPER_MD, SECTION_FILES
+from .config import CHAT_MODEL, MANUSCRIPT_DIR, OPENAI_API_KEY, PAPER_MD, SECTION_FILES
 
 SYSTEM_PROMPT = """You are a research-writing consultant helping the author think through the direction, \
 structure, and framing of a Software Engineering research paper. You can see their current rough notes and \
 the latest generated LaTeX paper (if any) below, for context.
+
+You have live web search -- use it to find related work, check whether a claim already has a citation in \
+the literature, or verify facts. When you cite a paper, name it and give the URL you found it at, so the \
+author can look it up themselves; never state a paper exists or supports a claim without having actually \
+searched for it.
 
 You are advisory only: discuss ideas, suggest direction, point out gaps or weak arguments, help them think -- \
 but you cannot edit their files. If they want a change made, tell them to update paper.md and hit Generate."""
@@ -31,5 +36,9 @@ def chat(message: str, history: list[dict], model: str | None = None) -> str:
         *history,
         {"role": "user", "content": message},
     ]
-    response = client.chat.completions.create(model=model or DEFAULT_MODEL, messages=messages)
-    return response.choices[0].message.content
+    response = client.responses.create(
+        model=model or CHAT_MODEL,
+        input=messages,
+        tools=[{"type": "web_search"}],
+    )
+    return response.output_text
