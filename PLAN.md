@@ -2,8 +2,8 @@
 
 ## Goal
 
-Turn rough, informally-written ideas in [`paper.md`](paper.md) into a professional, submission-ready
-LaTeX paper inside [`manuscript/`](manuscript/), with:
+Turn rough, informally-written ideas in `research/paper.md` into a professional, submission-ready
+LaTeX paper inside `research/manuscript/`, with:
 
 - A local web app for editing notes, triggering regeneration, and consulting an LLM about direction.
 - Git-based versioning (real `git`, not reinvented) — every change is a commit, every commit can be reverted.
@@ -18,13 +18,14 @@ LaTeX paper inside [`manuscript/`](manuscript/), with:
   context, helps you think through direction and phrasing) but does not write files itself in v1. You already
   have Claude Code for that.
 
-## Inputs already in the repo
+## Inputs
 
-- [`paper.md`](paper.md) — rough notes (currently empty, to be filled in by you).
-- [`Research Rough Docs.md`](Research%20Rough%20Docs.md) — section-by-section writing guidance (markdown).
-- [`manuscript/`](manuscript/) — real IEEEtran conference
-  template. `0_main.tex` includes `1_Introduction.tex` … `8_Conclusion.tex`, each currently holding
-  instructional placeholder text instead of real content.
+- `research/paper.md` — rough notes (filled in by you).
+- [`Research Rough Docs.md`](Research%20Rough%20Docs.md) — section-by-section writing guidance (markdown,
+  generic template guidance, not paper-specific — lives in this repo, not `research/`).
+- `research/manuscript/` — real IEEEtran conference
+  template. `0_main.tex` includes `1_Introduction.tex` … `8_Conclusion.tex`, initially holding
+  instructional placeholder text, later real content.
 
 These three together form the generation prompt: rough notes = content, the two skeletons = structure/style
 guide. Only the numbered section `.tex` files get rewritten — `0_main.tex`, the `setting_*.tex` files,
@@ -41,13 +42,26 @@ guide. Only the numbered section `.tex` files get rewritten — `0_main.tex`, th
 | Regen trigger | Manual — explicit "Generate" action, separate from "Save" | you want to save rough notes and leave without generating; save and generate must not be coupled |
 | PDF compile | Tectonic | single self-contained binary, no system-wide LaTeX install, scriptable via subprocess |
 
-## Directory layout (planned additions)
+## The research/ split
+
+`paper.md` and `manuscript/` are your actual, unpublished research content — not app source. They live in
+`research/`, a **separate, dedicated local git repo** with its own history, gitignored from this repo
+entirely (`research/` is a single line in `.gitignore`). This repo's own git history is for the *tool*; it
+gets pushed to GitHub. `research/`'s history is for the *paper*; it doesn't, ever.
+
+Practically: `app/config.py` defines `RESEARCH_DIR`, and `git_ops.py` runs all git commands with
+`cwd=RESEARCH_DIR` instead of the project root — every save/generate/revert commit lands in `research/`'s
+repo, invisible to this one. The `template-baseline` tag (pristine section instructions, see below) also
+lives inside `research/`'s repo, not this one.
+
+## Directory layout
 
 ```
 paper-writer-3000/
-├── paper.md                          # your rough notes (existing)
-├── Research Rough Docs.md            # section skeleton (existing)
-├── manuscript/                       # LaTeX template + generated output (existing)
+├── Research Rough Docs.md            # generic section skeleton -- not paper-specific, stays here
+├── research/                          # SEPARATE git repo, gitignored here entirely
+│   ├── paper.md                       # your rough notes
+│   └── manuscript/                    # LaTeX template + generated output + compiled PDF
 ├── app/
 │   ├── server.py                     # FastAPI app: routes + static file serving
 │   ├── generate.py                   # builds the prompt, calls OpenAI, writes N_Section.tex files
@@ -110,12 +124,11 @@ from that point.
 
 Repo will be **public**, so secret hygiene matters more than usual:
 
-- `.gitignore` must exclude `.env` (holds `OPENAI_API_KEY`), Python cache dirs, the compiled `paper.pdf`,
-  and Tectonic/LaTeX build artifacts (`*.aux`, `*.log`, `*.out`, `*.bbl`, `*.blg`) — set this up **before**
-  `git init` + first commit, so the key is never committed or exposed publicly.
-- The repo will contain both the app source and your paper's notes/LaTeX — since it's public, your rough
-  ideas and unpublished results will be publicly visible too. Worth a final confirmation once notes are
-  actually filled in, in case any of it needs to stay private until submission.
+- `.gitignore` must exclude `.env` (holds `OPENAI_API_KEY`), Python cache dirs, and `research/` itself —
+  set this up **before** `git init` + first commit, so neither the key nor any paper content is ever
+  committed or exposed publicly.
+- Only the app (this repo) is public. `research/` (your actual notes, generated paper, and PDF) is a
+  separate local repo with no remote — it never gets pushed anywhere. See "The research/ split" above.
 
 ## Build order
 
