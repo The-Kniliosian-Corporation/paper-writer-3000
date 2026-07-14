@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>paper-writer-3000</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<header>
+  <h1>paper-writer-3000</h1>
+  <div class="controls">
+    <select id="model-select"></select>
+    <button id="generate-btn">Generate</button>
+    <span id="generate-status"></span>
+  </div>
+</header>
+
+<main>
+  <section class="panel notes-panel">
+    <div class="panel-header">
+      <h2>Rough Notes</h2>
+      <div>
+        <span id="save-status"></span>
+        <button id="save-btn">Save</button>
+      </div>
+    </div>
+    <textarea id="notes-editor" spellcheck="false"></textarea>
+  </section>
+
+  <section class="panel output-panel">
+    <div class="panel-header">
+      <h2>Generated Paper</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="pdf">PDF</button>
+        <button class="tab-btn" data-tab="tex">LaTeX</button>
+      </div>
+    </div>
+    <div id="tab-pdf" class="tab-content active">
+      <iframe id="pdf-frame" title="Compiled PDF"></iframe>
+    </div>
+    <div id="tab-tex" class="tab-content">
+      <pre id="tex-view"></pre>
+    </div>
+  </section>
+
+  <section class="panel chat-panel">
+    <div class="panel-header">
+      <h2>Consult</h2>
+    </div>
+    <div id="chat-log"></div>
+    <form id="chat-form">
+      <textarea id="chat-input" placeholder="Ask about direction, framing, gaps..." spellcheck="false"></textarea>
+      <button type="submit">Send</button>
+    </form>
+  </section>
+</main>
+
+<footer class="panel history-panel">
+  <div class="panel-header">
+    <h2>History</h2>
+    <button id="history-refresh-btn">Refresh</button>
+  </div>
+  <ul id="history-list"></ul>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
