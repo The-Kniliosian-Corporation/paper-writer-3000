@@ -1,6 +1,6 @@
 import subprocess
 
-from .config import PROJECT_ROOT, TEMPLATE_TAG
+from .config import RESEARCH_DIR, TEMPLATE_TAG
 
 
 class GitError(RuntimeError):
@@ -10,7 +10,7 @@ class GitError(RuntimeError):
 def _run(*args: str) -> str:
     result = subprocess.run(
         ["git", *args],
-        cwd=PROJECT_ROOT,
+        cwd=RESEARCH_DIR,
         capture_output=True,
         text=True,
         encoding="utf-8",

@@ -4,8 +4,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-MANUSCRIPT_DIR = PROJECT_ROOT / "manuscript"
-PAPER_MD = PROJECT_ROOT / "paper.md"
+# Actual paper content lives in its own gitignored, dedicated git repo, kept
+# separate from this app's repo so it's never pushed to GitHub with it.
+RESEARCH_DIR = PROJECT_ROOT / "research"
+MANUSCRIPT_DIR = RESEARCH_DIR / "manuscript"
+PAPER_MD = RESEARCH_DIR / "paper.md"
 ROUGH_DOCS_MD = PROJECT_ROOT / "Research Rough Docs.md"
 MAIN_TEX = MANUSCRIPT_DIR / "0_main.tex"
 MAIN_PDF = MANUSCRIPT_DIR / "0_main.pdf"

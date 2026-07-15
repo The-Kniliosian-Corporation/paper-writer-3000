@@ -10,7 +10,7 @@ from .config import (
     MANUSCRIPT_DIR,
     OPENAI_API_KEY,
     PAPER_MD,
-    PROJECT_ROOT,
+    RESEARCH_DIR,
     ROUGH_DOCS_MD,
     SECTION_FILES,
 )
@@ -80,7 +80,7 @@ def _write_sections(data: dict) -> list[str]:
         content = data[name].strip() + "\n"
         path = MANUSCRIPT_DIR / f"{name}.tex"
         path.write_text(content, encoding="utf-8")
-        written.append(path.relative_to(PROJECT_ROOT).as_posix())
+        written.append(path.relative_to(RESEARCH_DIR).as_posix())
 
     main_tex = _read(MAIN_TEX)
     new_abstract = data["abstract"].strip()
@@ -90,7 +90,7 @@ def _write_sections(data: dict) -> list[str]:
         count=1,
     )
     MAIN_TEX.write_text(new_main_tex, encoding="utf-8")
-    written.append(MAIN_TEX.relative_to(PROJECT_ROOT).as_posix())
+    written.append(MAIN_TEX.relative_to(RESEARCH_DIR).as_posix())
     return written
 
 
