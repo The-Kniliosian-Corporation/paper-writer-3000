@@ -22,6 +22,14 @@ Rules:
 - Base every claim strictly on the rough notes provided. Never invent citations, numbers, dataset details, or results that are not present in the notes.
 - Where the rough notes are missing something a section needs (e.g. a citation, a concrete number, unfinished content), insert the existing LaTeX placeholder macro instead of making something up: \\citeme for a missing citation, \\fillme for a missing short value, or \\TODO{...} for a longer missing passage.
 - Preserve and use the template's existing macros where they fit the content: \\motivation, \\approach, \\results, \\summarybox{title}{body}, \\finding{...}. Do not redefine or remove them.
+- The rough notes may contain a marker of the form [figure: <filename>], showing where the author wants an already-uploaded image included. That file lives at 100_Figures/<filename> relative to the LaTeX source. Replace the marker with a proper LaTeX figure environment at that point in the section, e.g.:
+  \\begin{figure}[htbp]
+      \\centering
+      \\includegraphics[width=\\linewidth]{100_Figures/<filename>}
+      \\caption{...}
+      \\label{fig:<short-label>}
+  \\end{figure}
+  Write a real caption only if the surrounding notes describe what the figure shows; otherwise use \\fillme for the caption instead of inventing one.
 - Match the structure, subsections, and ordering implied by each section's instructions below, but replace all instructional/placeholder prose with real written content (or the placeholder macros above when content is genuinely unavailable).
 - Output only the LaTeX body content for each section (starting from \\section{...}), not \\documentclass, \\begin{document}, or any preamble.
 - Return ONLY a single JSON object, no prose outside it, no markdown code fences."""

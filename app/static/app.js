@@ -3,16 +3,34 @@ const saveBtn = document.getElementById("save-btn");
 const saveStatus = document.getElementById("save-status");
 const modelSelect = document.getElementById("model-select");
 const generateBtn = document.getElementById("generate-btn");
+const compileBtn = document.getElementById("compile-btn");
 const generateStatus = document.getElementById("generate-status");
 const pdfFrame = document.getElementById("pdf-frame");
-const texView = document.getElementById("tex-view");
+const texFileSelect = document.getElementById("tex-file-select");
+const texEditor = document.getElementById("tex-editor");
+const texSaveBtn = document.getElementById("tex-save-btn");
+const texSaveStatus = document.getElementById("tex-save-status");
 const chatLog = document.getElementById("chat-log");
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const historyList = document.getElementById("history-list");
 const historyRefreshBtn = document.getElementById("history-refresh-btn");
+const referencesMenuBtn = document.getElementById("references-menu-btn");
+const referencesModal = document.getElementById("references-modal");
+const referencesCloseBtn = document.getElementById("references-close-btn");
+const referencesAddBtn = document.getElementById("references-add-btn");
+const referencesSaveBtn = document.getElementById("references-save-btn");
+const referencesStatus = document.getElementById("references-status");
+const referencesTbody = document.getElementById("references-tbody");
+const figuresMenuBtn = document.getElementById("figures-menu-btn");
+const figuresModal = document.getElementById("figures-modal");
+const figuresCloseBtn = document.getElementById("figures-close-btn");
+const figuresGrid = document.getElementById("figures-grid");
+const figuresStatus = document.getElementById("figures-status");
+const figuresUploadInput = document.getElementById("figures-upload-input");
 
 let chatHistory = [];
+let texData = {};
 
 async function api(path, options) {
   const res = await fetch(path, options);
@@ -41,11 +59,65 @@ async function loadModels() {
 }
 
 async function loadTex() {
-  const data = await api("/api/tex");
-  texView.textContent = Object.entries(data)
-    .map(([name, content]) => `% ===== ${name}.tex =====\n${content}`)
-    .join("\n\n");
+  texData = await api("/api/tex");
+  const previouslySelected = texFileSelect.value;
+  texFileSelect.innerHTML = "";
+  for (const name of Object.keys(texData)) {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = `${name}.tex`;
+    texFileSelect.appendChild(opt);
+  }
+  if (previouslySelected && previouslySelected in texData) {
+    texFileSelect.value = previouslySelected;
+  }
+  texEditor.value = texData[texFileSelect.value] ?? "";
 }
+
+texFileSelect.onchange = () => {
+  texEditor.value = texData[texFileSelect.value] ?? "";
+  texSaveStatus.textContent = "";
+};
+
+texSaveBtn.onclick = async () => {
+  const name = texFileSelect.value;
+  if (!name) return;
+  texSaveBtn.disabled = true;
+  texSaveStatus.textContent = "Saving...";
+  try {
+    const result = await api(`/api/tex/${encodeURIComponent(name)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: texEditor.value }),
+    });
+    texData[name] = texEditor.value;
+    texSaveStatus.textContent = result.committed ? "Saved." : "No changes.";
+    await loadHistory();
+  } catch (err) {
+    texSaveStatus.textContent = `Error: ${err.message}`;
+  } finally {
+    texSaveBtn.disabled = false;
+  }
+};
+
+compileBtn.onclick = async () => {
+  compileBtn.disabled = true;
+  generateStatus.textContent = "Compiling PDF...";
+  try {
+    const result = await api("/api/compile", { method: "POST" });
+    if (result.ok) {
+      generateStatus.textContent = "PDF compiled.";
+      reloadPdf();
+    } else {
+      generateStatus.textContent = "PDF compile failed. See console.";
+      console.error(result.log);
+    }
+  } catch (err) {
+    generateStatus.textContent = `Error: ${err.message}`;
+  } finally {
+    compileBtn.disabled = false;
+  }
+};
 
 function reloadPdf() {
   pdfFrame.src = `/api/pdf?t=${Date.now()}`;
@@ -200,6 +272,77 @@ function appendChatMessage(role, text) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+function appendProposalCard(proposal) {
+  const card = document.createElement("div");
+  card.className = "proposal-card";
+
+  const header = document.createElement("div");
+  header.className = "proposal-header";
+  header.textContent = `Proposed edit: ${proposal.target}`;
+  card.appendChild(header);
+
+  if (proposal.summary) {
+    const summary = document.createElement("div");
+    summary.className = "proposal-summary";
+    summary.textContent = proposal.summary;
+    card.appendChild(summary);
+  }
+
+  const preview = document.createElement("textarea");
+  preview.className = "proposal-preview";
+  preview.readOnly = true;
+  preview.value = proposal.content;
+  card.appendChild(preview);
+
+  const actions = document.createElement("div");
+  actions.className = "proposal-actions";
+  const applyBtn = document.createElement("button");
+  applyBtn.textContent = "Apply";
+  const discardBtn = document.createElement("button");
+  discardBtn.textContent = "Discard";
+  discardBtn.className = "discard-btn";
+  actions.appendChild(applyBtn);
+  actions.appendChild(discardBtn);
+  card.appendChild(actions);
+
+  discardBtn.onclick = () => card.remove();
+
+  applyBtn.onclick = async () => {
+    applyBtn.disabled = true;
+    discardBtn.disabled = true;
+    try {
+      if (proposal.target === "paper.md") {
+        await api("/api/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: proposal.content }),
+        });
+        notesEditor.value = proposal.content;
+      } else {
+        await api(`/api/tex/${encodeURIComponent(proposal.target)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: proposal.content }),
+        });
+        texData[proposal.target] = proposal.content;
+        if (texFileSelect.value === proposal.target) {
+          texEditor.value = proposal.content;
+        }
+      }
+      await loadHistory();
+      header.textContent += " -- applied";
+      actions.remove();
+    } catch (err) {
+      applyBtn.disabled = false;
+      discardBtn.disabled = false;
+      header.textContent += ` -- error: ${err.message}`;
+    }
+  };
+
+  chatLog.appendChild(card);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
 chatForm.onsubmit = async (e) => {
   e.preventDefault();
   const message = chatInput.value.trim();
@@ -215,12 +358,190 @@ chatForm.onsubmit = async (e) => {
     chatHistory.push({ role: "user", content: message });
     chatHistory.push({ role: "assistant", content: result.reply });
     appendChatMessage("assistant", result.reply);
+    for (const proposal of result.proposals || []) {
+      appendProposalCard(proposal);
+    }
   } catch (err) {
     appendChatMessage("assistant", `Error: ${err.message}`);
   }
 };
 
 historyRefreshBtn.onclick = loadHistory;
+
+function addReferenceRow(url = "", note = "") {
+  const tr = document.createElement("tr");
+
+  const urlTd = document.createElement("td");
+  const urlInput = document.createElement("input");
+  urlInput.type = "text";
+  urlInput.className = "ref-url";
+  urlInput.placeholder = "https://...";
+  urlInput.value = url;
+  urlTd.appendChild(urlInput);
+
+  const noteTd = document.createElement("td");
+  const noteInput = document.createElement("input");
+  noteInput.type = "text";
+  noteInput.className = "ref-note";
+  noteInput.placeholder = "what to use it for";
+  noteInput.value = note;
+  noteTd.appendChild(noteInput);
+
+  const delTd = document.createElement("td");
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "Delete";
+  delBtn.onclick = () => tr.remove();
+  delTd.appendChild(delBtn);
+
+  tr.appendChild(urlTd);
+  tr.appendChild(noteTd);
+  tr.appendChild(delTd);
+  referencesTbody.appendChild(tr);
+}
+
+async function loadReferences() {
+  referencesStatus.textContent = "";
+  const entries = await api("/api/references");
+  referencesTbody.innerHTML = "";
+  for (const entry of entries) {
+    addReferenceRow(entry.url, entry.note);
+  }
+}
+
+referencesMenuBtn.onclick = async () => {
+  referencesModal.classList.remove("hidden");
+  try {
+    await loadReferences();
+  } catch (err) {
+    referencesStatus.textContent = `Error: ${err.message}`;
+  }
+};
+
+function closeReferencesModal() {
+  referencesModal.classList.add("hidden");
+}
+
+referencesCloseBtn.onclick = closeReferencesModal;
+
+referencesModal.addEventListener("mousedown", (e) => {
+  if (e.target === referencesModal) closeReferencesModal();
+});
+
+referencesAddBtn.onclick = () => addReferenceRow();
+
+async function loadFigures() {
+  figuresStatus.textContent = "";
+  const filenames = await api("/api/figures");
+  figuresGrid.innerHTML = "";
+  for (const filename of filenames) {
+    const fig = document.createElement("figure");
+    fig.className = "figure-thumb";
+    fig.draggable = true;
+
+    const img = document.createElement("img");
+    img.src = `/api/figures/${encodeURIComponent(filename)}`;
+    img.alt = filename;
+    img.draggable = false;
+
+    const caption = document.createElement("figcaption");
+    caption.textContent = filename;
+
+    fig.appendChild(img);
+    fig.appendChild(caption);
+
+    fig.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", `[figure: ${filename}]`);
+      e.dataTransfer.effectAllowed = "copy";
+    });
+
+    figuresGrid.appendChild(fig);
+  }
+}
+
+figuresMenuBtn.onclick = async () => {
+  figuresModal.classList.remove("hidden");
+  try {
+    await loadFigures();
+  } catch (err) {
+    figuresStatus.textContent = `Error: ${err.message}`;
+  }
+};
+
+function closeFiguresModal() {
+  figuresModal.classList.add("hidden");
+}
+
+figuresCloseBtn.onclick = closeFiguresModal;
+
+document.addEventListener("mousedown", (e) => {
+  if (!figuresModal.classList.contains("hidden") && !figuresModal.contains(e.target) && e.target !== figuresMenuBtn) {
+    closeFiguresModal();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!figuresModal.classList.contains("hidden")) closeFiguresModal();
+  if (!referencesModal.classList.contains("hidden")) closeReferencesModal();
+});
+
+figuresUploadInput.onchange = async () => {
+  const file = figuresUploadInput.files[0];
+  if (!file) return;
+  figuresStatus.textContent = "Uploading...";
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    await api("/api/figures", { method: "POST", body: formData });
+    figuresStatus.textContent = "Uploaded.";
+    await loadFigures();
+  } catch (err) {
+    figuresStatus.textContent = `Error: ${err.message}`;
+  } finally {
+    figuresUploadInput.value = "";
+  }
+};
+
+notesEditor.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "copy";
+});
+
+notesEditor.addEventListener("drop", (e) => {
+  e.preventDefault();
+  const marker = e.dataTransfer.getData("text/plain");
+  if (!marker) return;
+  const { selectionStart, selectionEnd, value } = notesEditor;
+  notesEditor.value = value.slice(0, selectionStart) + marker + value.slice(selectionEnd);
+  const caret = selectionStart + marker.length;
+  notesEditor.focus();
+  notesEditor.setSelectionRange(caret, caret);
+});
+
+referencesSaveBtn.onclick = async () => {
+  const entries = [...referencesTbody.querySelectorAll("tr")]
+    .map((tr) => ({
+      url: tr.querySelector(".ref-url").value.trim(),
+      note: tr.querySelector(".ref-note").value.trim(),
+    }))
+    .filter((entry) => entry.url || entry.note);
+
+  referencesSaveBtn.disabled = true;
+  referencesStatus.textContent = "Saving...";
+  try {
+    const result = await api("/api/references", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entries }),
+    });
+    referencesStatus.textContent = result.committed ? "Saved." : "No changes.";
+    await loadHistory();
+  } catch (err) {
+    referencesStatus.textContent = `Error: ${err.message}`;
+  } finally {
+    referencesSaveBtn.disabled = false;
+  }
+};
 
 function makeColResizer(gutter, leftPanel, rightPanel) {
   const minWidth = 150;

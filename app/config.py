@@ -12,6 +12,8 @@ PAPER_MD = RESEARCH_DIR / "paper.md"
 ROUGH_DOCS_MD = PROJECT_ROOT / "Research Rough Docs.md"
 MAIN_TEX = MANUSCRIPT_DIR / "0_main.tex"
 MAIN_PDF = MANUSCRIPT_DIR / "0_main.pdf"
+REFERENCES_JSON = RESEARCH_DIR / "references.json"
+FIGURES_DIR = MANUSCRIPT_DIR / "100_Figures"
 
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -47,3 +49,7 @@ SECTION_FILES = [
     "7_Threats",
     "8_Conclusion",
 ]
+
+# All editable LaTeX files (the numbered sections plus the wrapper 0_main.tex
+# that holds the abstract/title/includes), in document order.
+ALL_TEX_FILES = ["0_main", *SECTION_FILES]

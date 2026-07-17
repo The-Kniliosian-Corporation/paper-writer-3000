@@ -58,7 +58,7 @@ def show_template_file(path: str) -> str:
     return show_file_at_ref(TEMPLATE_TAG, path)
 
 
-def revert_notes_to(sha: str, message: str | None = None) -> str | None:
-    """Restore paper.md to its state at `sha` and commit that as a new commit."""
-    _run("checkout", sha, "--", "paper.md")
-    return commit(["paper.md"], message or f"revert: paper.md to {sha[:7]}")
+def revert_to(sha: str, paths: list[str], message: str | None = None) -> str | None:
+    """Restore the given paths to their state at `sha` and commit that as a new commit."""
+    _run("checkout", sha, "--", *paths)
+    return commit(paths, message or f"revert: to {sha[:7]}")

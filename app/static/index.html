@@ -8,9 +8,14 @@
 <body>
 <header>
   <h1>paper-writer-3000</h1>
+  <nav class="menubar">
+    <button id="references-menu-btn">References</button>
+    <button id="figures-menu-btn">Figures</button>
+  </nav>
   <div class="controls">
     <select id="model-select"></select>
     <button id="generate-btn">Generate</button>
+    <button id="compile-btn">Compile PDF</button>
     <span id="generate-status"></span>
   </div>
 </header>
@@ -40,8 +45,13 @@
     <div id="tab-pdf" class="tab-content active">
       <iframe id="pdf-frame" title="Compiled PDF"></iframe>
     </div>
-    <div id="tab-tex" class="tab-content">
-      <pre id="tex-view"></pre>
+    <div id="tab-tex" class="tab-content tex-editor-wrap">
+      <div class="tex-toolbar">
+        <select id="tex-file-select"></select>
+        <button id="tex-save-btn">Save</button>
+        <span id="tex-save-status"></span>
+      </div>
+      <textarea id="tex-editor" spellcheck="false"></textarea>
     </div>
   </section>
 
@@ -68,6 +78,48 @@
   </div>
   <ul id="history-list"></ul>
 </footer>
+
+<div id="figures-modal" class="floating-panel hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Figures</h2>
+      <button id="figures-close-btn" class="icon-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint">Drag a figure into the notes to reference it, or mention it by filename yourself.</p>
+      <div id="figures-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <span id="figures-status"></span>
+      <label class="upload-label">
+        Upload
+        <input type="file" id="figures-upload-input" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" hidden />
+      </label>
+    </div>
+  </div>
+</div>
+
+<div id="references-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>References</h2>
+      <button id="references-close-btn" class="icon-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table id="references-table">
+        <thead>
+          <tr><th>Research</th><th>What to use for</th><th></th></tr>
+        </thead>
+        <tbody id="references-tbody"></tbody>
+      </table>
+      <button id="references-add-btn">+ Add row</button>
+    </div>
+    <div class="modal-footer">
+      <span id="references-status"></span>
+      <button id="references-save-btn">Save</button>
+    </div>
+  </div>
+</div>
 
 <script src="/static/app.js"></script>
 </body>
