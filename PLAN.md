@@ -150,3 +150,35 @@ Repo will be **public**, so secret hygiene matters more than usual:
 - Repo visibility: **public**.
 - OpenAI model: **not fixed** — exposed as a configurable setting (`.env` default + UI dropdown override
   per generate call) rather than hardcoded, since you haven't picked one yet.
+
+## Extension: multi-project support
+
+Everything above described v1: exactly one paper, living in a single `research/` directory. That's since
+been generalized to **multiple projects**, each with the same internal shape (`paper.md`, `manuscript/`,
+`references.json`, its own git repo) but living under `projects/<slug>/` instead of a single fixed
+`research/`. This supersedes the "research/ split", "Directory layout", and "API endpoints" sections above
+in the following ways -- the rest of the design (git-based history, Save/Generate decoupling, advisory-only
+chat) is unchanged:
+
+- **Which project is "current" is client-side, via the URL** (`?project=<slug>`), not server-side state.
+  Every `/api/*` route (except `/api/projects` itself and `/api/models`) takes a `project` query parameter;
+  `app/server.py`'s `_paths(project)` resolves it to an `app/projects.py::ProjectPaths` via
+  `projects.paths_for()`, which every downstream module (`git_ops`, `manifest`, `generate`, `chat`,
+  `compile_pdf`, `references`, `template_upload`) now takes as an explicit first argument instead of reading
+  fixed constants from `config.py`. Two browser tabs with different `?project=` values are two fully
+  independent sessions.
+- **New project lifecycle** lives in `app/projects.py`: `create_project` (slugifies the name, copies the
+  bundled `app/starter_templates/ieee_default/` skeleton into a fresh `manuscript/`, scaffolds a
+  heading-per-section `paper.md`, `git init`s + commits + tags `template-baseline`), `rename_project` (only
+  touches `project.json`'s `name`, never the slug/directory, so existing URLs keep working),
+  `set_archived` (hide/unhide from the list; never deletes anything on disk), and `list_projects`.
+  New endpoints: `GET/POST /api/projects`, `POST /api/projects/{slug}/rename`,
+  `POST /api/projects/{slug}/{,un}archive`.
+- **One-time migration**: `projects.migrate_legacy_research_dir()` runs on server startup; if a top-level
+  `research/` still exists and `projects/` doesn't, it's `shutil.move`'d into `projects/<slug>/` (a
+  same-volume move, so `.git` history and the `template-baseline` tag survive intact) and given a
+  `project.json` so it shows up as an ordinary project, renamable from the UI.
+- **Starter template provenance**: extracted from the original `research/`'s pristine `template-baseline`
+  tag, with `setting_variable.tex` specifically excluded and replaced by an empty placeholder -- that one
+  file, unlike the rest of the tag, turned out to hold that paper's real macros/data rather than generic
+  instructional content, so it was not safe to bundle into this (public) app repo.

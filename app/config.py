@@ -4,19 +4,17 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-# Actual paper content lives in its own gitignored, dedicated git repo, kept
-# separate from this app's repo so it's never pushed to GitHub with it.
-RESEARCH_DIR = PROJECT_ROOT / "research"
-MANUSCRIPT_DIR = RESEARCH_DIR / "manuscript"
-PAPER_MD = RESEARCH_DIR / "paper.md"
+# Every paper lives in its own project directory under here, each a separate,
+# gitignored, dedicated git repo -- never pushed to this app's GitHub remote.
+# See app/projects.py.
+PROJECTS_ROOT = PROJECT_ROOT / "projects"
+# Bundled generic IEEEtran skeleton copied into every newly-created project
+# (see app/projects.py:create_project). Extracted from the pristine
+# template-baseline tag of the original single-project research/ repo, minus
+# setting_variable.tex (which held that paper's real macros/data and was
+# replaced with an empty placeholder) -- verified generic before bundling.
+STARTER_TEMPLATE_DIR = Path(__file__).resolve().parent / "starter_templates" / "ieee_default"
 ROUGH_DOCS_MD = PROJECT_ROOT / "Research Rough Docs.md"
-REFERENCES_JSON = RESEARCH_DIR / "references.json"
-FIGURES_DIR = MANUSCRIPT_DIR / "100_Figures"
-# Describes the current manuscript template's structure (main file, section files,
-# whether it has an abstract). Written by template_upload.py whenever a new
-# template is installed; falls back to DEFAULT_* below when absent (i.e. the
-# original template this repo shipped with, never replaced).
-TEMPLATE_MANIFEST_JSON = MANUSCRIPT_DIR / "template_manifest.json"
 
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -40,8 +38,12 @@ CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", DEFAULT_MODEL)
 # with generated content on every `generate` run.
 TEMPLATE_TAG = "template-baseline"
 
-# Default template structure (the IEEEtran template this repo ships with),
-# used by manifest.py whenever no template has been uploaded to replace it.
+# Default template structure, used by manifest.py whenever a project's
+# manuscript/ has no template_manifest.json of its own. This matches the
+# bundled starter template's layout, so both newly-created projects (which
+# get a manifest written at creation time) and the migrated legacy project
+# (which predates the manifest file and relies on this fallback) resolve to
+# the same structure.
 DEFAULT_MAIN_FILE = "0_main"
 DEFAULT_SECTION_FILES = [
     "1_Introduction",

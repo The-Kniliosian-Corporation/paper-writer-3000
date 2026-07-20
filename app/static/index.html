@@ -3,17 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <title>paper-writer-3000</title>
-<link rel="stylesheet" href="/static/style.css?v=3" />
+<link rel="stylesheet" href="/static/style.css?v=4" />
 </head>
 <body>
 <header>
   <h1>paper-writer-3000</h1>
   <nav class="menubar">
-    <button id="references-menu-btn">References</button>
-    <button id="figures-menu-btn">Figures</button>
-    <button id="template-menu-btn">Template</button>
+    <button id="projects-menu-btn">Projects</button>
+    <span id="project-scoped-nav" class="project-scoped hidden">
+      <button id="references-menu-btn">References</button>
+      <button id="figures-menu-btn">Figures</button>
+      <button id="template-menu-btn">Template</button>
+    </span>
   </nav>
-  <div class="controls">
+  <div class="controls project-scoped hidden" id="project-controls">
     <select id="model-select"></select>
     <button id="generate-btn">Generate</button>
     <button id="compile-btn">Compile PDF</button>
@@ -21,6 +24,7 @@
   </div>
 </header>
 
+<div id="project-view" class="project-scoped hidden">
 <main id="main-row">
   <section class="panel notes-panel" id="panel-notes">
     <div class="panel-header">
@@ -79,6 +83,28 @@
   </div>
   <ul id="history-list"></ul>
 </footer>
+</div>
+
+<div id="projects-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Projects</h2>
+      <button id="projects-close-btn" class="icon-btn hidden" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <ul id="projects-list"></ul>
+      <p id="projects-empty-hint" class="hint hidden">No projects yet -- create one below to get started.</p>
+      <hr>
+      <form id="new-project-form">
+        <input type="text" id="new-project-name" placeholder="New project name..." />
+        <button type="submit">+ Create</button>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <span id="projects-status"></span>
+    </div>
+  </div>
+</div>
 
 <div id="figures-modal" class="floating-panel hidden">
   <div class="modal">
@@ -151,6 +177,6 @@
   </div>
 </div>
 
-<script src="/static/app.js?v=3"></script>
+<script src="/static/app.js?v=4"></script>
 </body>
 </html>

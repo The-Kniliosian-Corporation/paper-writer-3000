@@ -6,7 +6,10 @@ __pycache__/
 *.pyc
 .venv/
 
-# your actual paper content -- a separate, dedicated git repo (see PLAN.md).
-# Never tracked here, never pushed to this repo's GitHub remote.
+# your actual paper content -- each project is its own separate, dedicated
+# git repo (see PLAN.md). Never tracked here, never pushed to this repo's
+# GitHub remote. research/ is the old single-project layout, kept ignored
+# here too in case migration hasn't run yet.
+projects/
 research/
 manuscript/

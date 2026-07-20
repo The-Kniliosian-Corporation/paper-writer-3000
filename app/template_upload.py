@@ -6,7 +6,6 @@ import zipfile
 from pathlib import Path
 
 from . import git_ops, manifest
-from .config import MANUSCRIPT_DIR, PAPER_MD
 
 _INPUT_RE = re.compile(r"\\(?:input|include)\{([^}]+)\}")
 _COMMENT_RE = re.compile(r"(?<!\\)%.*$")
@@ -47,7 +46,7 @@ def _parse_sections(main_content: str) -> tuple[list[str], bool]:
     return sections, has_abstract
 
 
-def _humanize(section_name: str) -> str:
+def humanize(section_name: str) -> str:
     """'3_StudyDesign' -> 'Study Design', 'sec_intro' -> 'Sec Intro', for the
     scaffolded rough draft headings."""
     name = re.sub(r"^\d+[_\-]?", "", section_name)
@@ -57,20 +56,23 @@ def _humanize(section_name: str) -> str:
     return " ".join(words).strip() or section_name
 
 
-def _scaffold_draft(sections: list[str]) -> None:
+def scaffold_draft(paths, sections: list[str]) -> None:
     """Write a heading-per-section skeleton into paper.md, but only if it's
-    currently empty -- never overwrite an existing rough draft."""
-    if PAPER_MD.exists() and PAPER_MD.read_text(encoding="utf-8").strip():
+    currently empty -- never overwrite an existing rough draft. Shared by
+    template uploads (replacing an existing project's template) and
+    projects.create_project (a brand-new project's first draft)."""
+    if paths.paper_md.exists() and paths.paper_md.read_text(encoding="utf-8").strip():
         return
-    skeleton = "\n\n\n".join(f"# {_humanize(name)}" for name in sections) + "\n\n\n"
-    PAPER_MD.write_text(skeleton, encoding="utf-8")
+    skeleton = "\n\n\n".join(f"# {humanize(name)}" for name in sections) + "\n\n\n"
+    paths.paper_md.write_text(skeleton, encoding="utf-8")
 
 
-def install(zip_bytes: bytes, filename: str) -> dict:
-    """Replace manuscript/ with the contents of an uploaded LaTeX template zip,
-    auto-detecting its main file and section files, and re-baseline the
-    template-baseline tag so generate.py's section instructions come from the
-    new template. Returns the new manifest plus the commit sha."""
+def install(paths, zip_bytes: bytes, filename: str) -> dict:
+    """Replace a project's manuscript/ with the contents of an uploaded LaTeX
+    template zip, auto-detecting its main file and section files, and
+    re-baseline the template-baseline tag so generate.py's section
+    instructions come from the new template. Returns the new manifest plus
+    the commit sha."""
     buf = io.BytesIO(zip_bytes)
     if not zipfile.is_zipfile(buf):
         raise ValueError(f"'{filename}' is not a valid .zip archive.")
@@ -105,19 +107,19 @@ def install(zip_bytes: bytes, filename: str) -> dict:
                     f"{', '.join(missing)}"
                 )
 
-            if MANUSCRIPT_DIR.exists():
-                shutil.rmtree(MANUSCRIPT_DIR)
-            shutil.copytree(main_dir, MANUSCRIPT_DIR)
+            if paths.manuscript_dir.exists():
+                shutil.rmtree(paths.manuscript_dir)
+            shutil.copytree(main_dir, paths.manuscript_dir)
 
     main_name = Path(main_path).stem
     new_manifest = {"main_file": main_name, "sections": sections, "has_abstract": has_abstract}
-    manifest.save(new_manifest)
-    _scaffold_draft(sections)
+    manifest.save(paths, new_manifest)
+    scaffold_draft(paths, sections)
 
     try:
-        sha = git_ops.commit(["manuscript", "paper.md"], f"template: install {main_name}")
+        sha = git_ops.commit(paths.root, ["manuscript", "paper.md"], f"template: install {main_name}")
         if sha is not None:
-            git_ops.tag_template_baseline()
+            git_ops.tag_template_baseline(paths.root)
     except git_ops.GitError as exc:
         raise ValueError(f"Template files were written, but committing failed: {exc}") from exc
 

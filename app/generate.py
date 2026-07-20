@@ -4,7 +4,7 @@ import re
 from openai import OpenAI
 
 from . import git_ops, manifest
-from .config import DEFAULT_MODEL, MANUSCRIPT_DIR, OPENAI_API_KEY, PAPER_MD, RESEARCH_DIR, ROUGH_DOCS_MD
+from .config import DEFAULT_MODEL, OPENAI_API_KEY, ROUGH_DOCS_MD
 
 SYSTEM_PROMPT = """You are an academic writing assistant helping a researcher turn a rough draft into a polished, professional Software Engineering research paper section, written in LaTeX, for a SANER-style conference submission.
 
@@ -37,15 +37,15 @@ def _extract_abstract(main_tex: str) -> str:
     return match.group(1) if match else ""
 
 
-def _build_user_prompt(section_files: list[str], main_file: str, has_abstract: bool) -> str:
-    notes = _read(PAPER_MD).strip()
+def _build_user_prompt(paths, section_files: list[str], main_file: str, has_abstract: bool) -> str:
+    notes = _read(paths.paper_md).strip()
     if not notes:
         raise ValueError("The rough draft is empty -- write something before generating.")
     guidance = _read(ROUGH_DOCS_MD).strip()
 
     section_blocks = []
     for name in section_files:
-        instructions = git_ops.show_template_file(f"manuscript/{name}.tex").strip()
+        instructions = git_ops.show_template_file(paths.root, f"manuscript/{name}.tex").strip()
         section_blocks.append(f"### {name}.tex -- original section instructions\n{instructions}")
 
     keys = ["abstract", *section_files] if has_abstract else list(section_files)
@@ -53,7 +53,7 @@ def _build_user_prompt(section_files: list[str], main_file: str, has_abstract: b
 
     abstract_block = ""
     if has_abstract:
-        template_main = git_ops.show_template_file(f"manuscript/{main_file}.tex")
+        template_main = git_ops.show_template_file(paths.root, f"manuscript/{main_file}.tex")
         abstract_instructions = _extract_abstract(template_main).strip()
         abstract_block = f"## Abstract -- original instructions\n{abstract_instructions}\n\n"
 
@@ -72,15 +72,15 @@ plain LaTeX inline content only, without \\begin{{abstract}}/\\end{{abstract}}).
 """
 
 
-def _write_sections(data: dict, section_files: list[str], main_file: str, has_abstract: bool) -> list[str]:
+def _write_sections(paths, data: dict, section_files: list[str], main_file: str, has_abstract: bool) -> list[str]:
     written = []
     for name in section_files:
         content = data[name].strip() + "\n"
-        path = MANUSCRIPT_DIR / f"{name}.tex"
+        path = paths.manuscript_dir / f"{name}.tex"
         path.write_text(content, encoding="utf-8")
-        written.append(path.relative_to(RESEARCH_DIR).as_posix())
+        written.append(path.relative_to(paths.root).as_posix())
 
-    main_tex_path = MANUSCRIPT_DIR / f"{main_file}.tex"
+    main_tex_path = paths.manuscript_dir / f"{main_file}.tex"
     if has_abstract and "abstract" in data:
         main_tex = _read(main_tex_path)
         new_abstract = data["abstract"].strip()
@@ -90,20 +90,20 @@ def _write_sections(data: dict, section_files: list[str], main_file: str, has_ab
             count=1,
         )
         main_tex_path.write_text(new_main_tex, encoding="utf-8")
-        written.append(main_tex_path.relative_to(RESEARCH_DIR).as_posix())
+        written.append(main_tex_path.relative_to(paths.root).as_posix())
 
     return written
 
 
-def generate(model: str | None = None) -> dict:
+def generate(paths, model: str | None = None) -> dict:
     if not OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is not set -- copy .env.example to .env and fill it in.")
 
-    m = manifest.load()
+    m = manifest.load(paths)
     section_files, main_file, has_abstract = m["sections"], m["main_file"], m.get("has_abstract", True)
 
     client = OpenAI(api_key=OPENAI_API_KEY)
-    user_prompt = _build_user_prompt(section_files, main_file, has_abstract)
+    user_prompt = _build_user_prompt(paths, section_files, main_file, has_abstract)
     used_model = model or DEFAULT_MODEL
 
     response = client.chat.completions.create(
@@ -121,12 +121,5 @@ def generate(model: str | None = None) -> dict:
     if missing:
         raise ValueError(f"Model response is missing keys: {missing}")
 
-    written = _write_sections(data, section_files, main_file, has_abstract)
+    written = _write_sections(paths, data, section_files, main_file, has_abstract)
     return {"model": used_model, "written": written}
-
-
-if __name__ == "__main__":
-    result = generate()
-    print(f"Generated with {result['model']}:")
-    for path in result["written"]:
-        print(f"  {path}")

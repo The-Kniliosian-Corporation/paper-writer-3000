@@ -35,11 +35,25 @@ const templateMainFile = document.getElementById("template-main-file");
 const templateSectionsList = document.getElementById("template-sections-list");
 const templateStatus = document.getElementById("template-status");
 const templateUploadInput = document.getElementById("template-upload-input");
+const projectsMenuBtn = document.getElementById("projects-menu-btn");
+const projectsModal = document.getElementById("projects-modal");
+const projectsCloseBtn = document.getElementById("projects-close-btn");
+const projectsList = document.getElementById("projects-list");
+const projectsEmptyHint = document.getElementById("projects-empty-hint");
+const projectsStatus = document.getElementById("projects-status");
+const newProjectForm = document.getElementById("new-project-form");
+const newProjectName = document.getElementById("new-project-name");
+const projectScopedEls = document.querySelectorAll(".project-scoped");
 
 let chatHistory = [];
 let texData = {};
+let currentProject = new URLSearchParams(location.search).get("project");
 
 async function api(path, options) {
+  if (path.startsWith("/api/") && !path.startsWith("/api/projects")) {
+    const sep = path.includes("?") ? "&" : "?";
+    path = `${path}${sep}project=${encodeURIComponent(currentProject)}`;
+  }
   const res = await fetch(path, options);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -491,6 +505,7 @@ document.addEventListener("keydown", (e) => {
   if (!figuresModal.classList.contains("hidden")) closeFiguresModal();
   if (!referencesModal.classList.contains("hidden")) closeReferencesModal();
   if (!templateModal.classList.contains("hidden")) closeTemplateModal();
+  if (!projectsModal.classList.contains("hidden")) closeProjectsModal();
 });
 
 figuresUploadInput.onchange = async () => {
@@ -676,7 +691,132 @@ makeColResizer(
 );
 makeRowResizer(document.querySelector('[data-resize="row-0"]'), document.getElementById("panel-history"));
 
+function setProjectScopedVisible(visible) {
+  projectScopedEls.forEach((el) => el.classList.toggle("hidden", !visible));
+}
+
+function openProject(slug) {
+  location.href = `${location.pathname}?project=${encodeURIComponent(slug)}`;
+}
+
+function renderProjectRow(project) {
+  const li = document.createElement("li");
+
+  const left = document.createElement("span");
+  const nameSpan = document.createElement("span");
+  nameSpan.className = "project-name";
+  nameSpan.textContent = project.name;
+  const metaSpan = document.createElement("span");
+  metaSpan.className = "project-meta";
+  metaSpan.textContent = project.created ? new Date(project.created).toLocaleString() : "";
+  left.appendChild(nameSpan);
+  left.appendChild(metaSpan);
+
+  const actions = document.createElement("span");
+  actions.className = "project-actions";
+
+  const openBtn = document.createElement("button");
+  openBtn.textContent = "Open";
+  openBtn.onclick = () => openProject(project.slug);
+
+  const renameBtn = document.createElement("button");
+  renameBtn.textContent = "Rename";
+  renameBtn.onclick = async () => {
+    const newName = prompt("Rename project:", project.name);
+    if (!newName || !newName.trim() || newName.trim() === project.name) return;
+    try {
+      await api(`/api/projects/${encodeURIComponent(project.slug)}/rename`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+      await loadProjectsList();
+    } catch (err) {
+      projectsStatus.textContent = `Error: ${err.message}`;
+    }
+  };
+
+  const archiveBtn = document.createElement("button");
+  archiveBtn.textContent = "Archive";
+  archiveBtn.className = "archive-btn";
+  archiveBtn.onclick = async () => {
+    if (!confirm(`Archive "${project.name}"? This hides it from the list -- nothing on disk is deleted.`)) return;
+    try {
+      await api(`/api/projects/${encodeURIComponent(project.slug)}/archive`, { method: "POST" });
+      await loadProjectsList();
+    } catch (err) {
+      projectsStatus.textContent = `Error: ${err.message}`;
+    }
+  };
+
+  actions.appendChild(openBtn);
+  actions.appendChild(renameBtn);
+  actions.appendChild(archiveBtn);
+  li.appendChild(left);
+  li.appendChild(actions);
+  return li;
+}
+
+async function loadProjectsList() {
+  const list = await api("/api/projects");
+  projectsList.innerHTML = "";
+  projectsEmptyHint.classList.toggle("hidden", list.length > 0);
+  for (const project of list) {
+    projectsList.appendChild(renderProjectRow(project));
+  }
+  return list;
+}
+
+function openProjectsModal(dismissable) {
+  projectsModal.classList.remove("hidden");
+  projectsCloseBtn.classList.toggle("hidden", !dismissable);
+  projectsStatus.textContent = "";
+  loadProjectsList().catch((err) => {
+    projectsStatus.textContent = `Error: ${err.message}`;
+  });
+}
+
+function closeProjectsModal() {
+  if (!currentProject) return; // landing mode -- nothing to fall back to until one is picked
+  projectsModal.classList.add("hidden");
+}
+
+projectsMenuBtn.onclick = () => openProjectsModal(!!currentProject);
+projectsCloseBtn.onclick = closeProjectsModal;
+
+projectsModal.addEventListener("mousedown", (e) => {
+  if (e.target === projectsModal) closeProjectsModal();
+});
+
+newProjectForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const name = newProjectName.value.trim();
+  if (!name) return;
+  projectsStatus.textContent = "Creating...";
+  try {
+    const result = await api("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    newProjectName.value = "";
+    openProject(result.slug);
+  } catch (err) {
+    projectsStatus.textContent = `Error: ${err.message}`;
+  }
+};
+
 (async function init() {
-  await Promise.all([loadNotes(), loadModels(), loadTex(), loadHistory()]);
-  reloadPdf();
+  if (!currentProject) {
+    openProjectsModal(false);
+    return;
+  }
+  try {
+    await Promise.all([loadNotes(), loadModels(), loadTex(), loadHistory()]);
+    setProjectScopedVisible(true);
+    reloadPdf();
+  } catch (err) {
+    currentProject = null;
+    openProjectsModal(false);
+  }
 })();

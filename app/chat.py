@@ -4,7 +4,7 @@ from openai import OpenAI
 
 from . import manifest
 from . import references as references_module
-from .config import CHAT_MODEL, MANUSCRIPT_DIR, OPENAI_API_KEY, PAPER_MD
+from .config import CHAT_MODEL, OPENAI_API_KEY
 
 SYSTEM_PROMPT = """You are a research-writing consultant helping the author think through the direction, \
 structure, and framing of a Software Engineering research paper. You can see their current rough draft, \
@@ -21,7 +21,8 @@ proposed replacement for that file, which they must explicitly review and apply 
 the FULL new content of the target file (not a diff/snippet), and a short summary of what changed and why. \
 Only propose an edit when the author asked for one or clearly wants a change made; otherwise just discuss."""
 
-def _propose_edit_tool() -> dict:
+
+def _propose_edit_tool(paths) -> dict:
     return {
         "type": "function",
         "name": "propose_edit",
@@ -35,7 +36,7 @@ def _propose_edit_tool() -> dict:
             "properties": {
                 "target": {
                     "type": "string",
-                    "enum": ["paper.md", *manifest.all_files()],
+                    "enum": ["paper.md", *manifest.all_files(paths)],
                     "description": "Which file this edit applies to.",
                 },
                 "content": {
@@ -52,17 +53,17 @@ def _propose_edit_tool() -> dict:
     }
 
 
-def _read_context() -> str:
-    notes = PAPER_MD.read_text(encoding="utf-8").strip() or "(empty)"
+def _read_context(paths) -> str:
+    notes = paths.paper_md.read_text(encoding="utf-8").strip() or "(empty)"
 
     sections = []
-    for name in manifest.all_files():
-        path = MANUSCRIPT_DIR / f"{name}.tex"
+    for name in manifest.all_files(paths):
+        path = paths.manuscript_dir / f"{name}.tex"
         if path.exists():
             sections.append(f"### {name}.tex\n{path.read_text(encoding='utf-8').strip()}")
     generated = "\n\n".join(sections) or "(not generated yet)"
 
-    references = references_module.load()
+    references = references_module.load(paths)
     if references:
         ref_lines = "\n".join(f"- {r['url']} -- {r['note']}" for r in references)
     else:
@@ -75,8 +76,8 @@ def _read_context() -> str:
     )
 
 
-def _extract_proposals(response) -> list[dict]:
-    valid_targets = ("paper.md", *manifest.all_files())
+def _extract_proposals(paths, response) -> list[dict]:
+    valid_targets = ("paper.md", *manifest.all_files(paths))
     proposals = []
     for item in response.output:
         if getattr(item, "type", None) != "function_call" or item.name != "propose_edit":
@@ -97,23 +98,23 @@ def _extract_proposals(response) -> list[dict]:
     return proposals
 
 
-def chat(message: str, history: list[dict], model: str | None = None) -> dict:
+def chat(paths, message: str, history: list[dict], model: str | None = None) -> dict:
     if not OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is not set -- copy .env.example to .env and fill it in.")
 
     client = OpenAI(api_key=OPENAI_API_KEY)
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + _read_context()},
+        {"role": "system", "content": SYSTEM_PROMPT + "\n\n" + _read_context(paths)},
         *history,
         {"role": "user", "content": message},
     ]
     response = client.responses.create(
         model=model or CHAT_MODEL,
         input=messages,
-        tools=[{"type": "web_search"}, _propose_edit_tool()],
+        tools=[{"type": "web_search"}, _propose_edit_tool(paths)],
     )
     reply = response.output_text
-    proposals = _extract_proposals(response)
+    proposals = _extract_proposals(paths, response)
     if not reply.strip() and proposals:
         reply = "I've drafted an edit for you to review below."
     return {"reply": reply, "proposals": proposals}

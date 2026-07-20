@@ -1,0 +1,220 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 固定コマンド
+%Don't touch the following setting
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%xcolor%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\definecolor{darkgreen}{rgb}{0, 0.5, 0} %下の色指定で使う
+\definecolor{whitesmoke}{rgb}{0.99, 0.99, 0.99} %下の色指定で使う
+\newcommand{\fillme}{\xspace\textcolor{red}{XXX}\xspace}
+\newcommand{\citeme}{\textcolor{red}{~\cite{FILL_ME_IN}}\xspace}
+
+\newcommand{\red}{\color{red}}%red
+\newcommand{\blue}{\color{blue}}
+\newcommand{\green}{\color{teal}}
+\newcommand{\purple}{\color{violet}}%violet
+\newcommand{\black}{\color{black}}
+
+
+\newcommand{\colorrow}{\rowcolor[rgb]{0.851,0.851,0.851}}
+\newcommand{\colorcel}{\cellcolor[rgb]{0.851,0.851,0.851}}
+
+%%Abbribiation%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\motivation}{\smallskip\noindent\textbf{Motivation. }}
+\newcommand{\approach}{\smallskip\noindent\textbf{Approach. }}
+\newcommand{\results}{\smallskip\noindent\textbf{Results. }}
+
+\def\fig#1{Figure~\ref{#1}}
+\def\tab#1{Table~\ref{#1}}
+\def\eqn#1{Equation~\ref{#1}}
+\def\sec#1{Section~\ref{#1}}
+\def\Underline{\setbox0\hbox\bgroup\let\\\endUnderline}
+\def\endUnderline{\vphantom{y}\egroup\smash{\underline{\box0}}\\}
+\def\|{\verb|}
+
+\newcommand{\ie}{\textit{i.e.,}\xspace}
+\newcommand{\eg}{\textit{e.g.,}\xspace}
+
+\newcommand{\etc}{\xspace\textit{etc.}\xspace}
+\newcommand{\etal}{\xspace\textit{et al.}\xspace}
+\newcommand{\aka}{\textit{a.k.a.,}\xspace}
+
+
+%
+\newcommand{\cnb}[3]{\fcolorbox{gray}{#1}{\bfseries\sffamily\scriptsize#2}{\sf\small\textit{\textcolor{red}{#3}}}}
+\newcommand{\nb}[2]{\fcolorbox{gray}{yellow}{\bfseries\sffamily\scriptsize#1}{\sf\small\textit{\textcolor{red}{#2}}}}
+\newcommand{\TODO}[1]{\cnb{yellow}{TODO:}{#1}}
+
+\newcommand{\ASSIGN}[2]{\fcolorbox{gray}{yellow}{\bfseries\sffamily\scriptsize TODO (#1)}{\sf\small\textit{\textcolor{red}{#2}}}}
+
+\newcommand{\doubt}[1]{\textcolor{orange}{#1}}
+\newcommand{\reminder}[1]{\textcolor{blue}{#1}}
+
+
+
+
+%Findings%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Define counters
+\newcounter{findingctr}
+
+% Define Finding command
+\newcommand{\finding}[1]{%
+  \noindent
+  \refstepcounter{findingctr}%
+  \textbf{Finding~\#\thefindingctr: #1}%
+}
+
+%Listing%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{listings}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinelanguage{diff}{
+  morecomment=**[f][\color{red}]{-},         % deleted lines 
+  morecomment=**[f][\color{darkgreen}]{+},       % added lines
+  moredelim=**[is][\bfseries]{@@}{@@},
+}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstset{
+  captionpos=t,
+  language=java, % this is it !
+  backgroundcolor=\color{backcolour},
+  basicstyle={\ttfamily \scriptsize}, %書体を変える (scriptsizeで小さくしてます)
+  %identifierstyle={\small}, %ちょっと字を小さくしてくれます
+  %commentstyle
+  % ={\ttfamily \scriptsize \color[rgb]{0,0.5,0}}, %コメントのフォント
+  %keywordstyle={\small\bfseries}, %???
+  %ndkeywordstyle={\small}, %???
+  %stringstyle={\small\ttfamily}, %???
+  frame=tb, %上下に線を引いてくれます
+  breaklines=true, %行からはみ出た時に折り返してくれる
+  columns=[l]{flexible}, %これがないと文字同士の間が妙に大きくなる．
+  %ちなみにfullflexibleだとインデントを勝手に補完しちゃう分やりづらくなるので注意
+  numbers=left, %左に行番号をつけたいときに使う
+  xrightmargin=0em,
+  xleftmargin=2em, %default:3zw.文字数分左余白を作る．もちろん負の値も可能．
+  numberstyle={\scriptsize},
+  stepnumber=1,
+  numbersep=0.5em, %default:1zw zwは日本語用なので変更
+  lineskip=-0.2ex, %行間
+  tabsize=4,
+  linewidth=\linewidth,
+  breakindent = 6pt, %default:20pt (改行時のインデント)
+  belowcaptionskip=0ex,
+  aboveskip=-3pt,
+  belowskip=-3pt,
+  framesep=2pt, %フレームと中身（コード）の間隔
+}
+\lstdefinelanguage{commit}{ %コミットメッセージ用
+  breakindent = 0pt,
+  numbers=none,
+  backgroundcolor=\color{white},
+  frame=single,
+  xleftmargin=3.5em,
+  numbersep=0em,
+  xrightmargin=1.5em,
+}
+
+
+%%tcolorbox%%%%%%%%%%%%%%
+% \usepackage[skins]{tcolorbox}
+% \newcommand{\conclusion}[1]{\begin{center}\begin{tcolorbox}[skin=widget, left=2mm,right=2mm,top=2mm,bottom=2mm,boxrule=0.3mm,arc=0mm,coltitle=black,colframe=black!99!white,colback=white!88!gray,width=(\linewidth),before=\hfill,after=\hfill]#1\end{tcolorbox}\end{center}}
+
+\usepackage[many]{tcolorbox}  
+\tcbuselibrary{listings,breakable}
+\definecolor{main}{HTML}{D0D3D4}    % setting main color to be used
+\definecolor{sub}{HTML}{D0D3D4}     % setting sub color to be used
+\newtcolorbox{dbox}{
+    left=2pt,right=2pt,top=2pt,bottom=2pt,
+    enhanced, % for a fancier setting,
+    boxrule = 0pt,% clearing the default rule
+    % borderline = {0.2pt}{0pt}{main}, % outer line
+    % borderline = {0.2pt}{1pt}{sub} % inner line
+    enlarge top by=5pt,%     equivalent to mdframed 'skipabove'
+    enlarge bottom by=3pt,%  equivalent to mdframed 'skipbelow'
+  }
+\tcbset{
+    sharp corners,
+    before skip = 0.1cm,    % add extra space before the box
+    after skip = 0.01cm      % add extra space after the box
+}
+
+
+\def\summarybox#1#2{
+\smallskip
+\begin{tcolorbox}[
+  enhanced,
+  title=#1,
+  colframe=darkgray,
+  left=2mm,
+  right=2mm,
+]
+    #2
+\end{tcolorbox}
+\medskip
+}
+
+
+
+
+
+
+% \setlength{\leftmargini}{1cm} % affects list environments
+\renewenvironment{quote}
+  {\list{}{\leftmargin=0.6cm \rightmargin=0.4cm}%
+   \item\relax}
+  {\endlist}
+
+
+
+
+
+% Style 1: Classic monochrome code listing (IEEE/ACM style)
+\lstdefinestyle{academicstyle}{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    xleftmargin=2em,
+    xrightmargin=2em,
+    aboveskip=0.5em,
+    belowskip=2em,
+    abovecaptionskip=0em,      % キャプションの上の余白
+    belowcaptionskip=0.5em,      % キャプションとコードの間の余白
+    columns=flexible,
+    keepspaces=true,
+    language={},  % No language to prevent keyword highlighting
+    % escapechar=@,
+}
+
+
+
+
+%Response letter%%%
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{reviewcomment}[1][Comment]{  % デフォルトは"Conclusion"
+    enhanced,
+    frame hidden,
+    borderline west={4pt}{0pt}{gray!50},
+    colback=gray!10,
+    boxrule=0pt,
+    sharp corners,
+    breakable,
+    before upper={\parindent0pt\textbf{#1:}\par\vspace{0.3em}},
+    fontupper=\itshape,
+    left=10pt,
+    right=10pt,
+    top=5pt,
+    bottom=5pt,
+    before skip=1.5\baselineskip
+}
+\newcommand{\answer}[1]{\bigskip #1}
+
+\newenvironment{src}{\color{gray}}{}
+\newenvironment{rev}{\color{blue}}{}
+\newcommand{\ADDED}[1]{\bigskip\noindent\textbf{\textsf{ADDED (#1):} }}
+\newcommand{\DELETED}[1]{\bigskip\noindent\textbf{\textsf{DELETED (#1):} }}
+\newcommand{\MODIFIED}[1]{\bigskip\noindent\textbf{\textsf{MODIFIED (#1):} }}
+
+%%%%

@@ -429,3 +429,58 @@ select {
 .proposal-actions { display: flex; gap: 0.4rem; }
 .proposal-actions .discard-btn { background: #6b3a3a; }
 .proposal-actions .discard-btn:hover { background: #8a4a4a; }
+
+.project-scoped.hidden { display: none; }
+.icon-btn.hidden { display: none; }
+
+#projects-list {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+}
+
+#projects-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.2rem;
+  border-bottom: 1px solid #2a2b2e;
+}
+
+#projects-list .project-name {
+  font-weight: bold;
+  color: #e6e6e6;
+}
+
+#projects-list .project-meta {
+  font-size: 0.75rem;
+  color: #9a9a9a;
+  margin-left: 0.5rem;
+}
+
+#projects-list .project-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex: 0 0 auto;
+}
+
+#projects-list button { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+#projects-list .archive-btn { background: #6b3a3a; }
+#projects-list .archive-btn:hover { background: #8a4a4a; }
+
+#new-project-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#new-project-form input {
+  flex: 1;
+  background: #2b2c30;
+  color: #e6e6e6;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+}
+
+#projects-status { font-size: 0.8rem; color: #9a9a9a; }

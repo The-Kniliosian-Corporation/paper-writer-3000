@@ -1,13 +1,11 @@
 import json
 
-from .config import REFERENCES_JSON
 
-
-def load() -> list[dict]:
-    if not REFERENCES_JSON.exists():
+def load(paths) -> list[dict]:
+    if not paths.references_json.exists():
         return []
-    return json.loads(REFERENCES_JSON.read_text(encoding="utf-8"))
+    return json.loads(paths.references_json.read_text(encoding="utf-8"))
 
 
-def save(entries: list[dict]) -> None:
-    REFERENCES_JSON.write_text(json.dumps(entries, indent=2), encoding="utf-8")
+def save(paths, entries: list[dict]) -> None:
+    paths.references_json.write_text(json.dumps(entries, indent=2), encoding="utf-8")

@@ -4,7 +4,6 @@ import subprocess
 from pathlib import Path
 
 from . import manifest
-from .config import MANUSCRIPT_DIR
 
 _FALLBACK_TECTONIC = Path.home() / "AppData" / "Local" / "tectonic" / "tectonic.exe"
 
@@ -20,13 +19,13 @@ def _find_tectonic() -> str:
     )
 
 
-def compile_pdf() -> dict:
+def compile_pdf(paths) -> dict:
     tectonic = _find_tectonic()
-    main_tex = manifest.main_tex_path()
-    main_pdf = manifest.main_pdf_path()
+    main_tex = manifest.main_tex_path(paths)
+    main_pdf = manifest.main_pdf_path(paths)
     result = subprocess.run(
         [tectonic, main_tex.name],
-        cwd=MANUSCRIPT_DIR,
+        cwd=paths.manuscript_dir,
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -38,11 +37,3 @@ def compile_pdf() -> dict:
         "log": result.stdout + "\n" + result.stderr,
     }
 
-
-if __name__ == "__main__":
-    outcome = compile_pdf()
-    if outcome["ok"]:
-        print(f"PDF written to {outcome['pdf_path']}")
-    else:
-        print("Compilation failed:")
-        print(outcome["log"])
