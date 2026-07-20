@@ -19,7 +19,12 @@ You can also propose edits to paper.md (the rough draft) or any of the generated
 the propose_edit tool. Edits are NEVER applied automatically -- calling the tool only shows the author a \
 proposed replacement for that file, which they must explicitly review and apply themselves. Always pass \
 the FULL new content of the target file (not a diff/snippet), and a short summary of what changed and why. \
-Only propose an edit when the author asked for one or clearly wants a change made; otherwise just discuss."""
+Only propose an edit when the author asked for one or clearly wants a change made; otherwise just discuss.
+
+When proposing a LaTeX section file (not paper.md itself), write nothing that is not stated in the rough \
+draft or your web search findings -- never invent claims, numbers, or results. Where the draft leaves \
+something ambiguous or underspecified rather than genuinely missing, don't silently pick an interpretation \
+-- mark it with \\TODO{explain the ambiguity} instead."""
 
 
 def _propose_edit_tool(paths) -> dict:

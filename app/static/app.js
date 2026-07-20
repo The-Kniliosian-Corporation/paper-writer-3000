@@ -141,7 +141,7 @@ compileBtn.onclick = async () => {
 };
 
 function reloadPdf() {
-  pdfFrame.src = `/api/pdf?t=${Date.now()}`;
+  pdfFrame.src = `/api/pdf?project=${encodeURIComponent(currentProject)}&t=${Date.now()}`;
 }
 
 async function loadHistory() {
@@ -460,7 +460,7 @@ async function loadFigures() {
     fig.draggable = true;
 
     const img = document.createElement("img");
-    img.src = `/api/figures/${encodeURIComponent(filename)}`;
+    img.src = `/api/figures/${encodeURIComponent(filename)}?project=${encodeURIComponent(currentProject)}`;
     img.alt = filename;
     img.draggable = false;
 
