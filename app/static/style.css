@@ -10,6 +10,14 @@ body {
   flex-direction: column;
 }
 
+/* While dragging a resize gutter: block text selection (dragging over a
+   textarea/chat-log would otherwise start highlighting text instead of just
+   resizing), and disable pointer events on iframes -- otherwise the PDF
+   preview iframe captures mousemove once the cursor crosses into it,
+   starving the drag handler and making the resize feel like it "sticks". */
+body.resizing { user-select: none; }
+body.resizing iframe { pointer-events: none; }
+
 header {
   display: flex;
   justify-content: space-between;
@@ -45,6 +53,14 @@ header h1 {
 }
 
 .menubar button:hover { background: #38393d; }
+
+#project-view {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
 
 main {
   flex: 1 1 auto;
@@ -430,7 +446,7 @@ select {
 .proposal-actions .discard-btn { background: #6b3a3a; }
 .proposal-actions .discard-btn:hover { background: #8a4a4a; }
 
-.project-scoped.hidden { display: none; }
+.project-scoped.hidden { display: none !important; }
 .icon-btn.hidden { display: none; }
 
 #projects-list {

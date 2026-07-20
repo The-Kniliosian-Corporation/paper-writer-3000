@@ -632,6 +632,7 @@ function makeColResizer(gutter, leftPanel, rightPanel) {
     const startLeft = leftPanel.getBoundingClientRect().width;
     const startRight = rightPanel.getBoundingClientRect().width;
     gutter.classList.add("dragging");
+    document.body.classList.add("resizing");
     document.body.style.cursor = "col-resize";
 
     function onMove(ev) {
@@ -644,6 +645,7 @@ function makeColResizer(gutter, leftPanel, rightPanel) {
     }
     function onUp() {
       gutter.classList.remove("dragging");
+      document.body.classList.remove("resizing");
       document.body.style.cursor = "";
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
@@ -660,6 +662,7 @@ function makeRowResizer(gutter, panelBelow) {
     const startY = e.clientY;
     const startHeight = panelBelow.getBoundingClientRect().height;
     gutter.classList.add("dragging");
+    document.body.classList.add("resizing");
     document.body.style.cursor = "row-resize";
 
     function onMove(ev) {
@@ -670,6 +673,7 @@ function makeRowResizer(gutter, panelBelow) {
     }
     function onUp() {
       gutter.classList.remove("dragging");
+      document.body.classList.remove("resizing");
       document.body.style.cursor = "";
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
