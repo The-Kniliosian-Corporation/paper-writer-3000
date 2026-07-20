@@ -5,29 +5,29 @@
 Turn rough, informally-written ideas in `research/paper.md` into a professional, submission-ready
 LaTeX paper inside `research/manuscript/`, with:
 
-- A local web app for editing notes, triggering regeneration, and consulting an LLM about direction.
+- A local web app for editing the rough draft, triggering regeneration, and consulting an LLM about direction.
 - Git-based versioning (real `git`, not reinvented) — every change is a commit, every commit can be reverted.
-- On-demand regeneration of the formal LaTeX paper (and a compiled PDF), decoupled from saving notes — you
+- On-demand regeneration of the formal LaTeX paper (and a compiled PDF), decoupled from saving the rough draft — you
   can save and walk away without generating.
 
 ## Non-goals (v1)
 
 - No multi-user / auth / deployment — single local user, runs on `localhost` only.
 - No custom diff/history engine — `git log` / `git diff` / `git revert` are the history UI, just surfaced nicely.
-- No agentic file-editing chat — the in-app chat is **read-only/advisory** (sees notes + generated paper for
+- No agentic file-editing chat — the in-app chat is **read-only/advisory** (sees the rough draft + generated paper for
   context, helps you think through direction and phrasing) but does not write files itself in v1. You already
   have Claude Code for that.
 
 ## Inputs
 
-- `research/paper.md` — rough notes (filled in by you).
+- `research/paper.md` — rough draft (filled in by you).
 - [`Research Rough Docs.md`](Research%20Rough%20Docs.md) — section-by-section writing guidance (markdown,
   generic template guidance, not paper-specific — lives in this repo, not `research/`).
 - `research/manuscript/` — real IEEEtran conference
   template. `0_main.tex` includes `1_Introduction.tex` … `8_Conclusion.tex`, initially holding
   instructional placeholder text, later real content.
 
-These three together form the generation prompt: rough notes = content, the two skeletons = structure/style
+These three together form the generation prompt: the rough draft = content, the two skeletons = structure/style
 guide. Only the numbered section `.tex` files get rewritten — `0_main.tex`, the `setting_*.tex` files,
 `IEEEtran.cls`, and `references.bib` are left alone.
 
@@ -39,7 +39,7 @@ guide. Only the numbered section `.tex` files get rewritten — `0_main.tex`, th
 | LLM | OpenAI API, model configurable | you have a key for this, not Anthropic; model not decided yet so make it a setting, not a hardcoded default |
 | Frontend | Single static page, vanilla HTML/JS | no build step, no framework overhead |
 | Versioning | real `git` via subprocess | free history/revert, nothing to reinvent |
-| Regen trigger | Manual — explicit "Generate" action, separate from "Save" | you want to save rough notes and leave without generating; save and generate must not be coupled |
+| Regen trigger | Manual — explicit "Generate" action, separate from "Save" | you want to save the rough draft and leave without generating; save and generate must not be coupled |
 | PDF compile | Tectonic | single self-contained binary, no system-wide LaTeX install, scriptable via subprocess |
 
 ## The research/ split
@@ -60,16 +60,16 @@ lives inside `research/`'s repo, not this one.
 paper-writer-3000/
 ├── Research Rough Docs.md            # generic section skeleton -- not paper-specific, stays here
 ├── research/                          # SEPARATE git repo, gitignored here entirely
-│   ├── paper.md                       # your rough notes
+│   ├── paper.md                       # your rough draft
 │   └── manuscript/                    # LaTeX template + generated output + compiled PDF
 ├── app/
 │   ├── server.py                     # FastAPI app: routes + static file serving
 │   ├── generate.py                   # builds the prompt, calls OpenAI, writes N_Section.tex files
 │   ├── compile_pdf.py                # invokes Tectonic on 0_main.tex, writes output PDF
-│   ├── chat.py                       # advisory chat endpoint (reads notes+paper as context)
+│   ├── chat.py                       # advisory chat endpoint (reads rough draft+paper as context)
 │   ├── git_ops.py                    # thin wrapper: commit, log, revert, diff
 │   └── static/
-│       ├── index.html                # notes editor with separate Save/Generate buttons + model
+│       ├── index.html                # rough draft editor with separate Save/Generate buttons + model
 │       │                              # selector + PDF preview + chat + history panel
 │       ├── app.js
 │       └── style.css
@@ -104,7 +104,7 @@ tectonic-typesetting.tectonic`) rather than vendored into the repo, so it never 
    commit history.
 
 **Reverting:** pick a commit in the history panel → app runs `git revert`/`git checkout` to restore that
-state of `paper.md`. This only restores notes; you then hit Generate again if you want the paper regenerated
+state of `paper.md`. This only restores the rough draft; you then hit Generate again if you want the paper regenerated
 from that point.
 
 ## API endpoints (backend)
@@ -117,7 +117,7 @@ from that point.
 - `GET /history` — returns `git log` entries for the history panel.
 - `POST /revert` — reverts `paper.md` to a given commit.
 - `GET /pdf` — serves the latest compiled PDF for the viewer panel.
-- `POST /chat` — advisory consultation; sends your message + current notes/paper as context to OpenAI,
+- `POST /chat` — advisory consultation; sends your message + current rough draft/paper as context to OpenAI,
   streams back a reply. No file writes.
 
 ## GitHub
@@ -127,7 +127,7 @@ Repo will be **public**, so secret hygiene matters more than usual:
 - `.gitignore` must exclude `.env` (holds `OPENAI_API_KEY`), Python cache dirs, and `research/` itself —
   set this up **before** `git init` + first commit, so neither the key nor any paper content is ever
   committed or exposed publicly.
-- Only the app (this repo) is public. `research/` (your actual notes, generated paper, and PDF) is a
+- Only the app (this repo) is public. `research/` (your actual rough draft, generated paper, and PDF) is a
   separate local repo with no remote — it never gets pushed anywhere. See "The research/ split" above.
 
 ## Build order

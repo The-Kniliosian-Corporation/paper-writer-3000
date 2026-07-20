@@ -28,6 +28,13 @@ const figuresCloseBtn = document.getElementById("figures-close-btn");
 const figuresGrid = document.getElementById("figures-grid");
 const figuresStatus = document.getElementById("figures-status");
 const figuresUploadInput = document.getElementById("figures-upload-input");
+const templateMenuBtn = document.getElementById("template-menu-btn");
+const templateModal = document.getElementById("template-modal");
+const templateCloseBtn = document.getElementById("template-close-btn");
+const templateMainFile = document.getElementById("template-main-file");
+const templateSectionsList = document.getElementById("template-sections-list");
+const templateStatus = document.getElementById("template-status");
+const templateUploadInput = document.getElementById("template-upload-input");
 
 let chatHistory = [];
 let texData = {};
@@ -132,7 +139,7 @@ async function loadHistory() {
     meta.className = "meta";
     meta.textContent = `${entry.sha.slice(0, 7)} · ${entry.message} · ${new Date(entry.date).toLocaleString()}`;
     const revertBtn = document.createElement("button");
-    revertBtn.textContent = "Revert notes here";
+    revertBtn.textContent = "Revert draft here";
     revertBtn.onclick = () => revertTo(entry.sha);
     li.appendChild(meta);
     li.appendChild(revertBtn);
@@ -141,7 +148,7 @@ async function loadHistory() {
 }
 
 async function revertTo(sha) {
-  if (!confirm(`Revert paper.md to commit ${sha.slice(0, 7)}? This creates a new commit; nothing is destroyed.`)) return;
+  if (!confirm(`Revert the rough draft and generated paper to commit ${sha.slice(0, 7)}? This creates a new commit; nothing is destroyed.`)) return;
   await api("/api/revert", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -483,6 +490,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (!figuresModal.classList.contains("hidden")) closeFiguresModal();
   if (!referencesModal.classList.contains("hidden")) closeReferencesModal();
+  if (!templateModal.classList.contains("hidden")) closeTemplateModal();
 });
 
 figuresUploadInput.onchange = async () => {
@@ -499,6 +507,64 @@ figuresUploadInput.onchange = async () => {
     figuresStatus.textContent = `Error: ${err.message}`;
   } finally {
     figuresUploadInput.value = "";
+  }
+};
+
+async function loadTemplate() {
+  templateStatus.textContent = "";
+  const data = await api("/api/template");
+  templateMainFile.textContent = `${data.main_file}.tex`;
+  templateSectionsList.innerHTML = "";
+  for (const name of data.sections) {
+    const li = document.createElement("li");
+    li.textContent = `${name}.tex`;
+    templateSectionsList.appendChild(li);
+  }
+}
+
+templateMenuBtn.onclick = async () => {
+  templateModal.classList.remove("hidden");
+  try {
+    await loadTemplate();
+  } catch (err) {
+    templateStatus.textContent = `Error: ${err.message}`;
+  }
+};
+
+function closeTemplateModal() {
+  templateModal.classList.add("hidden");
+}
+
+templateCloseBtn.onclick = closeTemplateModal;
+
+templateModal.addEventListener("mousedown", (e) => {
+  if (e.target === templateModal) closeTemplateModal();
+});
+
+templateUploadInput.onchange = async () => {
+  const file = templateUploadInput.files[0];
+  if (!file) return;
+  if (
+    !confirm(
+      `Install "${file.name}" as the new manuscript template? This replaces the current template, ` +
+        "including any generated content and figures. Nothing is destroyed -- it's committed to history first."
+    )
+  ) {
+    templateUploadInput.value = "";
+    return;
+  }
+
+  templateStatus.textContent = "Uploading...";
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const result = await api("/api/template", { method: "POST", body: formData });
+    templateStatus.textContent = `Installed: ${result.main_file}.tex, ${result.sections.length} section(s).`;
+    await Promise.all([loadTemplate(), loadNotes(), loadTex(), loadHistory()]);
+  } catch (err) {
+    templateStatus.textContent = `Error: ${err.message}`;
+  } finally {
+    templateUploadInput.value = "";
   }
 };
 

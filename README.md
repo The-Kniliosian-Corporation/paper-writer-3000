@@ -1,6 +1,6 @@
 # paper-writer-3000
 
-Write rough, informal research notes in `research/paper.md`; generate a polished, submission-ready
+Write a rough draft of your research in `research/paper.md`; generate a polished, submission-ready
 IEEE-conference LaTeX paper (and a compiled PDF) from them on demand, with every change tracked in git so
 nothing is ever lost.
 
@@ -8,22 +8,23 @@ See [PLAN.md](PLAN.md) for the full design rationale and decisions behind the ap
 
 ## How it works
 
-- **Save** — edit your notes in the web UI, hit Save. Writes the file and commits it. No LLM call.
-- **Generate** — hit Generate (pick a model first if you like). Sends your notes, plus the paper's
+- **Save** — edit your rough draft in the web UI, hit Save. Writes the file and commits it. No LLM call.
+- **Generate** — hit Generate (pick a model first if you like). Sends your rough draft, plus the paper's
   section-by-section writing guidance, to OpenAI; writes the rewritten LaTeX into `research/manuscript/*.tex`;
   compiles it to a PDF with Tectonic; commits the regenerated `.tex` files.
-- **History** — every save and generate is a real git commit. The history panel lists them; "revert notes
-  here" restores your notes to an earlier point as a new commit (nothing is destroyed).
+- **History** — every save and generate is a real git commit. The history panel lists them; "revert draft
+  here" restores your rough draft (and the generated paper) to an earlier point as a new commit (nothing is
+  destroyed).
 - **Consult** — a chat panel for talking through direction, gaps, and framing. It has live web search (via
   OpenAI's `web_search` tool), so it can look up related work and check claims instead of guessing. It's
-  advisory only: it can see your notes and generated paper for context but never edits files itself.
+  advisory only: it can see your rough draft and generated paper for context but never edits files itself.
 
-The model never invents citations, numbers, or claims that aren't in your notes — where something's
+The model never invents citations, numbers, or claims that aren't in your rough draft — where something's
 missing it inserts the template's existing `\citeme`, `\fillme`, or `\TODO{...}` placeholders instead.
 
 ## Your paper content is a separate git repo
 
-`research/` — your notes, the generated LaTeX, and the compiled PDF — is its **own, separate local git
+`research/` — your rough draft, the generated LaTeX, and the compiled PDF — is its **own, separate local git
 repo**, entirely gitignored from this one. This repo (the app) is meant to be pushed to GitHub; `research/`
 is not connected to any remote and never will be by anything this app does. That split exists specifically
 so your actual, unpublished paper content never ends up in this app's (potentially public) GitHub history.
@@ -68,11 +69,11 @@ Open http://127.0.0.1:8000.
 ```
 Research Rough Docs.md      generic section-by-section writing guidance (not paper-specific)
 research/                   SEPARATE git repo, gitignored here entirely -- your actual paper content
-  paper.md                    rough notes (your input)
+  paper.md                    rough draft (your input)
   manuscript/                 IEEE LaTeX template + generated output + compiled PDF
 app/
   server.py                 FastAPI app and routes
-  generate.py                notes + guidance -> rewritten manuscript/*.tex via OpenAI
+  generate.py                rough draft + guidance -> rewritten manuscript/*.tex via OpenAI
   compile_pdf.py             manuscript/0_main.tex -> PDF via Tectonic
   chat.py                    advisory consultation endpoint
   git_ops.py                 thin git wrapper (commit, log, revert) -- operates on research/, not this repo

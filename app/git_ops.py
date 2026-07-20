@@ -62,3 +62,10 @@ def revert_to(sha: str, paths: list[str], message: str | None = None) -> str | N
     """Restore the given paths to their state at `sha` and commit that as a new commit."""
     _run("checkout", sha, "--", *paths)
     return commit(paths, message or f"revert: to {sha[:7]}")
+
+
+def tag_template_baseline() -> None:
+    """(Re)point the template-baseline tag at the current HEAD. Used after installing
+    a new template, since its pristine, un-generated section files become the new
+    baseline that generate.py reads section instructions from."""
+    _run("tag", "-f", TEMPLATE_TAG)

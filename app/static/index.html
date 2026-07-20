@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <title>paper-writer-3000</title>
-<link rel="stylesheet" href="/static/style.css?v=2" />
+<link rel="stylesheet" href="/static/style.css?v=3" />
 </head>
 <body>
 <header>
@@ -11,6 +11,7 @@
   <nav class="menubar">
     <button id="references-menu-btn">References</button>
     <button id="figures-menu-btn">Figures</button>
+    <button id="template-menu-btn">Template</button>
   </nav>
   <div class="controls">
     <select id="model-select"></select>
@@ -23,7 +24,7 @@
 <main id="main-row">
   <section class="panel notes-panel" id="panel-notes">
     <div class="panel-header">
-      <h2>Rough Notes</h2>
+      <h2>Rough Draft</h2>
       <div>
         <span id="save-status"></span>
         <button id="save-btn">Save</button>
@@ -86,7 +87,7 @@
       <button id="figures-close-btn" class="icon-btn" aria-label="Close">&times;</button>
     </div>
     <div class="modal-body">
-      <p class="hint">Drag a figure into the notes to reference it, or mention it by filename yourself.</p>
+      <p class="hint">Drag a figure into the rough draft to reference it, or mention it by filename yourself.</p>
       <div id="figures-grid"></div>
     </div>
     <div class="modal-footer">
@@ -94,6 +95,35 @@
       <label class="upload-label">
         Upload
         <input type="file" id="figures-upload-input" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp" hidden />
+      </label>
+    </div>
+  </div>
+</div>
+
+<div id="template-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Template</h2>
+      <button id="template-close-btn" class="icon-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint">Current manuscript template:</p>
+      <p><strong id="template-main-file"></strong></p>
+      <ul id="template-sections-list"></ul>
+      <hr>
+      <p class="hint">
+        Upload a new LaTeX template (.zip) to replace it. The archive must contain one main .tex file with
+        <code>\begin{document}</code> that <code>\input</code>s/<code>\include</code>s its section files;
+        those become the sections you write into. <strong>This replaces the current manuscript template,
+        including any generated content and figures.</strong> If your rough draft is empty, it will be
+        pre-filled with a heading per detected section.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <span id="template-status"></span>
+      <label class="upload-label">
+        Upload template
+        <input type="file" id="template-upload-input" accept=".zip" hidden />
       </label>
     </div>
   </div>
@@ -121,6 +151,6 @@
   </div>
 </div>
 
-<script src="/static/app.js?v=2"></script>
+<script src="/static/app.js?v=3"></script>
 </body>
 </html>

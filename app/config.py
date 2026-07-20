@@ -10,10 +10,13 @@ RESEARCH_DIR = PROJECT_ROOT / "research"
 MANUSCRIPT_DIR = RESEARCH_DIR / "manuscript"
 PAPER_MD = RESEARCH_DIR / "paper.md"
 ROUGH_DOCS_MD = PROJECT_ROOT / "Research Rough Docs.md"
-MAIN_TEX = MANUSCRIPT_DIR / "0_main.tex"
-MAIN_PDF = MANUSCRIPT_DIR / "0_main.pdf"
 REFERENCES_JSON = RESEARCH_DIR / "references.json"
 FIGURES_DIR = MANUSCRIPT_DIR / "100_Figures"
+# Describes the current manuscript template's structure (main file, section files,
+# whether it has an abstract). Written by template_upload.py whenever a new
+# template is installed; falls back to DEFAULT_* below when absent (i.e. the
+# original template this repo shipped with, never replaced).
+TEMPLATE_MANIFEST_JSON = MANUSCRIPT_DIR / "template_manifest.json"
 
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -37,9 +40,10 @@ CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", DEFAULT_MODEL)
 # with generated content on every `generate` run.
 TEMPLATE_TAG = "template-baseline"
 
-# Numbered LaTeX section files that get fully rewritten by generate.py, in
-# document order. The abstract (inside 0_main.tex) is handled separately.
-SECTION_FILES = [
+# Default template structure (the IEEEtran template this repo ships with),
+# used by manifest.py whenever no template has been uploaded to replace it.
+DEFAULT_MAIN_FILE = "0_main"
+DEFAULT_SECTION_FILES = [
     "1_Introduction",
     "2_Background",
     "3_StudyDesign",
@@ -49,7 +53,4 @@ SECTION_FILES = [
     "7_Threats",
     "8_Conclusion",
 ]
-
-# All editable LaTeX files (the numbered sections plus the wrapper 0_main.tex
-# that holds the abstract/title/includes), in document order.
-ALL_TEX_FILES = ["0_main", *SECTION_FILES]
+DEFAULT_HAS_ABSTRACT = True

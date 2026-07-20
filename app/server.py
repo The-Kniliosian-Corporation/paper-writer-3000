@@ -9,25 +9,23 @@ from . import chat as chat_module
 from . import compile_pdf as compile_module
 from . import generate as generate_module
 from . import git_ops
+from . import manifest
 from . import references as references_module
-from .config import (
-    ALL_TEX_FILES,
-    DEFAULT_MODEL,
-    FIGURES_DIR,
-    MAIN_PDF,
-    MANUSCRIPT_DIR,
-    PAPER_MD,
-    SELECTABLE_MODELS,
-)
+from . import template_upload
+from .config import DEFAULT_MODEL, FIGURES_DIR, MANUSCRIPT_DIR, PAPER_MD, SELECTABLE_MODELS
 
 app = FastAPI(title="paper-writer-3000")
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-TEX_FILES = ALL_TEX_FILES
-_TEX_PATHS = {name: f"manuscript/{name}.tex" for name in TEX_FILES}
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
+
+
+def _tex_paths() -> dict[str, str]:
+    """Recomputed on every call rather than cached at import time, since a
+    template upload can change the section/main-file list at any moment."""
+    return {name: f"manuscript/{name}.tex" for name in manifest.all_files()}
 
 
 class SaveRequest(BaseModel):
@@ -98,7 +96,7 @@ def run_generate(body: GenerateRequest):
     compile_result = compile_module.compile_pdf()
 
     try:
-        sha = git_ops.commit(list(_TEX_PATHS.values()), f"regen: {gen_result['model']}")
+        sha = git_ops.commit(list(_tex_paths().values()), f"regen: {gen_result['model']}")
     except git_ops.GitError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -114,7 +112,7 @@ def run_generate(body: GenerateRequest):
 @app.get("/api/tex")
 def get_tex():
     sections = {}
-    for name in TEX_FILES:
+    for name in manifest.all_files():
         path = MANUSCRIPT_DIR / f"{name}.tex"
         sections[name] = path.read_text(encoding="utf-8") if path.exists() else ""
     return sections
@@ -122,12 +120,13 @@ def get_tex():
 
 @app.post("/api/tex/{name}")
 def save_tex(name: str, body: TexSaveRequest):
-    if name not in _TEX_PATHS:
+    tex_paths = _tex_paths()
+    if name not in tex_paths:
         raise HTTPException(status_code=404, detail=f"Unknown LaTeX file: {name}")
     path = MANUSCRIPT_DIR / f"{name}.tex"
     path.write_text(body.content, encoding="utf-8")
     try:
-        sha = git_ops.commit([_TEX_PATHS[name]], f"edit: {name}.tex")
+        sha = git_ops.commit([tex_paths[name]], f"edit: {name}.tex")
     except git_ops.GitError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return {"committed": sha is not None, "sha": sha}
@@ -149,7 +148,7 @@ def get_history():
 
 @app.post("/api/revert")
 def revert(body: RevertRequest):
-    paths = ["paper.md", *_TEX_PATHS.values()]
+    paths = ["paper.md", *_tex_paths().values()]
     try:
         sha = git_ops.revert_to(body.sha, paths, f"revert: to {body.sha[:7]}")
     except git_ops.GitError as exc:
@@ -211,9 +210,26 @@ async def upload_figure(file: UploadFile = File(...)):
 
 @app.get("/api/pdf")
 def get_pdf():
-    if not MAIN_PDF.exists():
+    main_pdf = manifest.main_pdf_path()
+    if not main_pdf.exists():
         raise HTTPException(status_code=404, detail="No PDF compiled yet -- hit Generate first.")
-    return FileResponse(MAIN_PDF, media_type="application/pdf")
+    return FileResponse(main_pdf, media_type="application/pdf")
+
+
+@app.get("/api/template")
+def get_template():
+    return manifest.load()
+
+
+@app.post("/api/template")
+async def upload_template(file: UploadFile = File(...)):
+    try:
+        result = template_upload.install(await file.read(), file.filename or "template.zip")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except git_ops.GitError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return result
 
 
 @app.post("/api/chat")
