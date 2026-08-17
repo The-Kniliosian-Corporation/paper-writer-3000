@@ -13,7 +13,7 @@ from . import manifest
 from . import projects
 from . import references as references_module
 from . import template_upload
-from .config import DEFAULT_MODEL, SELECTABLE_MODELS
+from .config import DEFAULT_MODEL, SELECTABLE_MODELS, STARTER_TEMPLATES
 
 app = FastAPI(title="paper-writer-3000")
 
@@ -66,6 +66,7 @@ class TexSaveRequest(BaseModel):
 class ReferenceEntry(BaseModel):
     url: str
     note: str
+    bib_key: str | None = None
 
 
 class ReferencesRequest(BaseModel):
@@ -74,6 +75,7 @@ class ReferencesRequest(BaseModel):
 
 class NewProjectRequest(BaseModel):
     name: str
+    template: str = "ieee_default"
 
 
 class RenameProjectRequest(BaseModel):
@@ -85,6 +87,11 @@ def root():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/api/templates")
+def list_templates():
+    return list(STARTER_TEMPLATES.keys())
+
+
 @app.get("/api/projects")
 def list_projects():
     return projects.list_projects()
@@ -93,7 +100,7 @@ def list_projects():
 @app.post("/api/projects")
 def create_project(body: NewProjectRequest):
     try:
-        return projects.create_project(body.name)
+        return projects.create_project(body.name, body.template)
     except projects.ProjectError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

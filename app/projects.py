@@ -8,7 +8,7 @@ from pathlib import Path
 from . import git_ops
 from . import manifest as manifest_module
 from . import template_upload
-from .config import PROJECT_ROOT, PROJECTS_ROOT, STARTER_TEMPLATE_DIR
+from .config import PROJECT_ROOT, PROJECTS_ROOT, STARTER_TEMPLATE_DIR, STARTER_TEMPLATES
 
 _SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _PROJECT_JSON = "project.json"
@@ -32,6 +32,7 @@ class ProjectPaths:
     manuscript_dir: Path
     paper_md: Path
     references_json: Path
+    references_bib: Path
     figures_dir: Path
     template_manifest_json: Path
 
@@ -44,6 +45,7 @@ def _paths_from_root(slug: str, root: Path) -> ProjectPaths:
         manuscript_dir=manuscript_dir,
         paper_md=root / "paper.md",
         references_json=root / "references.json",
+        references_bib=manuscript_dir / "references.bib",
         figures_dir=manuscript_dir / "100_Figures",
         template_manifest_json=manuscript_dir / "template_manifest.json",
     )
@@ -110,12 +112,12 @@ def _unique_slug(base_slug: str) -> str:
     return slug
 
 
-def _install_starter_template(manuscript_dir: Path, root: Path) -> list[str]:
+def _install_starter_template(manuscript_dir: Path, root: Path, template_dir: Path) -> list[str]:
     """Copy the bundled starter template into a new project: the .gitignore
     goes at the project root (its patterns are root-relative), everything
     else into manuscript/. Returns the starter's section file base names."""
     manuscript_dir.mkdir(parents=True, exist_ok=True)
-    for item in STARTER_TEMPLATE_DIR.iterdir():
+    for item in template_dir.iterdir():
         if item.name == ".gitignore":
             shutil.copy2(item, root / ".gitignore")
         elif item.is_dir():
@@ -125,21 +127,24 @@ def _install_starter_template(manuscript_dir: Path, root: Path) -> list[str]:
 
     return sorted(
         p.stem
-        for p in STARTER_TEMPLATE_DIR.glob("*.tex")
+        for p in template_dir.glob("*.tex")
         if p.stem != "0_main" and re.match(r"^\d", p.stem)
     )
 
 
-def create_project(name: str) -> dict:
+def create_project(name: str, template: str = "ieee_default") -> dict:
     name = name.strip()
     if not name:
         raise ProjectError("Project name cannot be empty.")
+    if template not in STARTER_TEMPLATES:
+        raise ProjectError(f"Unknown template: {template!r}. Choose from: {', '.join(STARTER_TEMPLATES)}")
 
     slug = _unique_slug(_slugify(name))
     root = PROJECTS_ROOT / slug
     paths = _paths_from_root(slug, root)
 
-    section_files = _install_starter_template(paths.manuscript_dir, root)
+    template_dir = STARTER_TEMPLATES[template]
+    section_files = _install_starter_template(paths.manuscript_dir, root, template_dir)
     manifest_module.save(paths, {"main_file": "0_main", "sections": section_files, "has_abstract": True})
     template_upload.scaffold_draft(paths, section_files)
 

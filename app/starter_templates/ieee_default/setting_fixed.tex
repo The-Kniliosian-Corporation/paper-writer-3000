@@ -9,8 +9,8 @@
 %%xcolor%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \definecolor{darkgreen}{rgb}{0, 0.5, 0} %下の色指定で使う
 \definecolor{whitesmoke}{rgb}{0.99, 0.99, 0.99} %下の色指定で使う
-\newcommand{\fillme}{\xspace\textcolor{red}{XXX}\xspace}
-\newcommand{\citeme}{\textcolor{red}{~\cite{FILL_ME_IN}}\xspace}
+\DeclareRobustCommand{\fillme}{\xspace\textcolor{red}{XXX}\xspace}
+\DeclareRobustCommand{\citeme}{\textcolor{red}{~\cite{FILL_ME_IN}}\xspace}
 
 \newcommand{\red}{\color{red}}%red
 \newcommand{\blue}{\color{blue}}
@@ -44,11 +44,11 @@
 
 
 %
-\newcommand{\cnb}[3]{\fcolorbox{gray}{#1}{\bfseries\sffamily\scriptsize#2}{\sf\small\textit{\textcolor{red}{#3}}}}
-\newcommand{\nb}[2]{\fcolorbox{gray}{yellow}{\bfseries\sffamily\scriptsize#1}{\sf\small\textit{\textcolor{red}{#2}}}}
-\newcommand{\TODO}[1]{\cnb{yellow}{TODO:}{#1}}
+\DeclareRobustCommand{\cnb}[3]{\fcolorbox{gray}{#1}{\bfseries\sffamily\scriptsize#2}{\sf\small\textit{\textcolor{red}{#3}}}}
+\DeclareRobustCommand{\nb}[2]{\fcolorbox{gray}{yellow}{\bfseries\sffamily\scriptsize#1}{\sf\small\textit{\textcolor{red}{#2}}}}
+\DeclareRobustCommand{\TODO}[1]{\cnb{yellow}{TODO:}{#1}}
 
-\newcommand{\ASSIGN}[2]{\fcolorbox{gray}{yellow}{\bfseries\sffamily\scriptsize TODO (#1)}{\sf\small\textit{\textcolor{red}{#2}}}}
+\DeclareRobustCommand{\ASSIGN}[2]{\fcolorbox{gray}{yellow}{\bfseries\sffamily\scriptsize TODO (#1)}{\sf\small\textit{\textcolor{red}{#2}}}}
 
 \newcommand{\doubt}[1]{\textcolor{orange}{#1}}
 \newcommand{\reminder}[1]{\textcolor{blue}{#1}}

@@ -13,7 +13,12 @@ PROJECTS_ROOT = PROJECT_ROOT / "projects"
 # template-baseline tag of the original single-project research/ repo, minus
 # setting_variable.tex (which held that paper's real macros/data and was
 # replaced with an empty placeholder) -- verified generic before bundling.
-STARTER_TEMPLATE_DIR = Path(__file__).resolve().parent / "starter_templates" / "ieee_default"
+_TEMPLATES_ROOT = Path(__file__).resolve().parent / "starter_templates"
+STARTER_TEMPLATES: dict[str, Path] = {
+    "ieee_default": _TEMPLATES_ROOT / "ieee_default",
+    "ku_coop_report": _TEMPLATES_ROOT / "ku_coop_report",
+}
+STARTER_TEMPLATE_DIR = STARTER_TEMPLATES["ieee_default"]  # kept for legacy callers
 ROUGH_DOCS_MD = PROJECT_ROOT / "Research Rough Docs.md"
 
 load_dotenv(PROJECT_ROOT / ".env")
