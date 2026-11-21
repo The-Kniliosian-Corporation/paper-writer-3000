@@ -27,9 +27,14 @@ the Template button afterwards if you'd rather use your own `.zip`'d template in
 - **History** — every save and generate is a real git commit. The history panel lists them; "revert draft
   here" restores your rough draft (and the generated paper) to an earlier point as a new commit (nothing is
   destroyed).
-- **Consult** — a chat panel for talking through direction, gaps, and framing. It has live web search (via
-  OpenAI's `web_search` tool), so it can look up related work and check claims instead of guessing. It's
-  advisory only: it can see your rough draft and generated paper for context but never edits files itself.
+- **Consult** — a chat panel for talking through direction, gaps, and framing, backed by your local
+  [Claude Code](https://claude.com/claude-code) CLI (`claude -p`, using whatever account it's logged in
+  with). Each message runs Claude Code in a throwaway scratch copy of the project, with read/edit tools and
+  live web search but no shell, so it can read your draft, paper, bibliography, and gathered references,
+  look up related work, and check claims instead of guessing. It never edits your real files: anything it
+  changes in `paper.md` or a section `.tex` comes back as a proposed edit that you review and Apply
+  yourself. Optional `.env` settings: `CLAUDE_CHAT_MODEL` (e.g. `sonnet`, `opus`), `CLAUDE_BIN` (if
+  `claude` isn't on PATH), `CLAUDE_CHAT_TIMEOUT` (seconds, default 600).
 
 The model never invents citations, numbers, or claims that aren't in your rough draft — where something's
 missing it inserts the template's existing `\citeme`, `\fillme`, or `\TODO{...}` placeholders instead.
@@ -46,7 +51,8 @@ GitHub history.
 
 - Python 3.10+
 - [Tectonic](https://tectonic-typesetting.github.io/) on your `PATH` (or set `TECTONIC_BIN` to its full path)
-- An OpenAI API key
+- An OpenAI API key (for Generate)
+- [Claude Code](https://claude.com/claude-code) installed and logged in (for Consult)
 
 ## Setup
 
@@ -56,8 +62,8 @@ python -m venv .venv
 copy .env.example .env
 ```
 
-Then open `.env` and fill in `OPENAI_API_KEY` (and optionally `OPENAI_MODEL` / `OPENAI_MODELS` /
-`OPENAI_CHAT_MODEL` — the chat model needs to be one your account can use with the `web_search` tool).
+Then open `.env` and fill in `OPENAI_API_KEY` (and optionally `OPENAI_MODEL` / `OPENAI_MODELS`). Consult
+needs no key: it uses whatever account your `claude` CLI is logged in with (see the `CLAUDE_*` settings).
 
 `projects/` is created automatically the first time you create a project from the UI -- nothing to set up
 by hand. (If you have an older, single-project checkout of this app with a top-level `research/` directory,
