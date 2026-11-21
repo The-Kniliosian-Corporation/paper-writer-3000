@@ -206,6 +206,8 @@ select {
 }
 .chat-msg.user { background: #2b4a7a; align-self: flex-end; }
 .chat-msg.assistant { background: #2b2c30; align-self: flex-start; }
+.chat-msg.pending { color: #9a9ba0; font-style: italic; animation: chat-pending 1.4s ease-in-out infinite; }
+@keyframes chat-pending { 50% { opacity: 0.45; } }
 
 .chat-msg p { margin: 0.4em 0; white-space: normal; }
 .chat-msg p:first-child { margin-top: 0; }

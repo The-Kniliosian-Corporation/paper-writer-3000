@@ -32,10 +32,15 @@ SELECTABLE_MODELS = [
     for m in os.environ.get("OPENAI_MODELS", DEFAULT_MODEL).split(",")
     if m.strip()
 ]
-# Model used for the consultant chat, via the Responses API's web_search tool
-# (needs a model on your account that supports it). Separate from DEFAULT_MODEL
-# since generate.py needs structured JSON output, not web search.
-CHAT_MODEL = os.environ.get("OPENAI_CHAT_MODEL", DEFAULT_MODEL)
+# The Consult panel runs on the local Claude Code CLI (see app/chat.py), using
+# whatever account `claude` is logged in with -- no API key needed here.
+# CLAUDE_BIN: path to the claude executable if it isn't on PATH.
+# CLAUDE_CHAT_MODEL: model alias or full name (e.g. sonnet, opus); unset means
+# Claude Code's own default.
+# CLAUDE_CHAT_TIMEOUT: seconds before a consult request is abandoned.
+CLAUDE_BIN = os.environ.get("CLAUDE_BIN") or None
+CLAUDE_CHAT_MODEL = os.environ.get("CLAUDE_CHAT_MODEL") or None
+CLAUDE_CHAT_TIMEOUT = int(os.environ.get("CLAUDE_CHAT_TIMEOUT", "600"))
 
 # The tag of the commit holding the pristine, un-generated section skeletons
 # (see PLAN.md). Section instructions are read from this tag via `git show`

@@ -364,18 +364,34 @@ function appendProposalCard(proposal) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+const chatSendBtn = chatForm.querySelector('button[type="submit"]');
+let chatPending = false;
+
 chatForm.onsubmit = async (e) => {
   e.preventDefault();
+  if (chatPending) return;
   const message = chatInput.value.trim();
   if (!message) return;
   chatInput.value = "";
   appendChatMessage("user", message);
+
+  // Claude Code reads files and searches the web before answering, so a
+  // reply can take a minute or more -- show that it's working.
+  chatPending = true;
+  chatSendBtn.disabled = true;
+  const pending = document.createElement("div");
+  pending.className = "chat-msg assistant pending";
+  pending.textContent = "Claude Code is thinking…";
+  chatLog.appendChild(pending);
+  chatLog.scrollTop = chatLog.scrollHeight;
+
   try {
     const result = await api("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history: chatHistory }),
     });
+    pending.remove();
     chatHistory.push({ role: "user", content: message });
     chatHistory.push({ role: "assistant", content: result.reply });
     appendChatMessage("assistant", result.reply);
@@ -383,7 +399,11 @@ chatForm.onsubmit = async (e) => {
       appendProposalCard(proposal);
     }
   } catch (err) {
+    pending.remove();
     appendChatMessage("assistant", `Error: ${err.message}`);
+  } finally {
+    chatPending = false;
+    chatSendBtn.disabled = false;
   }
 };
 
